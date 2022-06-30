@@ -1,53 +1,82 @@
 ---
-title: "fecundity test"
+title: "fecundity and germination test"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-
-
-```
-
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
+```{r}
 library(ggplot2)
 library(dplyr)
 
+```
 
-ggplot(Fecundity1, aes(x = species)) + 
+
+```{r}
+#Fecundity means and variances across species
+Fecundity <- Fecundity %>% filter(count !="NA") %>% transform(count = as.numeric(count)) 
+Fecundity1 <- Fecundity %>% select(species, count)
+
+Fecundity1 %>% group_by(species) %>% summarise(avg = mean(count), var = var(count))
+
+summary(acwr$count) 
+
+```
+
+
+```{r}
+#Fecundity visualization
+Fecundity2 <- Fecundity1 %>% filter(species %in% c("AC", "PL", "SA", "UR"))
+Fecundity3 <- Fecundity1 %>% filter(species %in% c("BR", "FE", "LA"))
+ggplot(Fecundity1, aes(x=species, y=count, fill=species)) + 
+  geom_boxplot() + coord_flip() + theme_minimal() + labs(title = "Fecundity")
+
+ggplot(Fecundity, aes(x = species)) + 
   geom_bar() +
   theme_minimal(base_size = 12)
 
-Fecundity1 <- Fecundity1 %>% filter(count !="NA") %>% transform(count = as.numeric(count))
-acwr <- Fecundity1 %>% filter(species == "AC")
-brma <- Fecundity1 %>% filter(species == "BR")
-homu <- Fecundity1 %>% filter(species == "HO")
-femi <- Fecundity1 %>% filter(species == "FE")
-laca <- Fecundity1 %>% filter(species == "LA")
-naat <- Fecundity1 %>% filter(species == "NA")
-pler <- Fecundity1 %>% filter(species == "PL")
-saco <- Fecundity1 %>% filter(species == "SA")
-urli <- Fecundity1 %>% filter(species == "UR")
-
-summary(acwr$count) 
-quantile(acwr$count, prob=c(.25,.5,.75), na.rm=TRUE)
-
-Fecundity1 %>% group_by(species) %>% summarise(avg = mean(count), min = min(count), max=max(count))
+```
 
 
+
+
+```{r}
+#Germination means and variances across species
+Germination1 <- Germination %>% filter(count !="NA") %>% transform(count = as.numeric(count)) %>% select(species, count)
+Germination1 %>% group_by(species) %>% summarise(avg = mean(count), var = var(count))
+
+```
+
+
+```{r}
+#Germination visualization
+Fecundity2 <- Fecundity1 %>% filter(species %in% c("AC", "HO", "PL", "SA", "UR"))
+Fecundity3 <- Fecundity1 %>% filter(species %in% c("BR", "FE", "LA"))
+ggplot(Germination1, aes(x=species, y=count, fill=species)) + 
+  geom_boxplot() + coord_flip() + theme_minimal() + labs(title = "Germination")
+
+ggplot(Fecundity, aes(x = species)) + 
+  geom_bar() +
+  theme_minimal(base_size = 12)
+```
+
+
+```{r}
+#extra notes
 df <- data.frame(species = c("AC","BR","HO","FE","LA","PL","SA","UR"),
   Var= c(var(acwr$count), var(brma$count),var(homu$count),var(femi$count),var(laca$count),var(pler$count),var(saco$count),var(urli$count)),
   SD= c(sd(acwr$count), sd(brma$count),sd(homu$count),sd(femi$count),sd(laca$count),sd(pler$count),sd(saco$count),sd(urli$count))
 )
 df
 
-ggplot(acwr, aes(x=count)) + geom_histogram(stat="count") + theme_minimal()
+acwr <- Fecundity %>% filter(species == "AC", count !="NA")
+brma <- Fecundity %>% filter(species == "BR", count !="NA")
+homu <- Fecundity %>% filter(species == "HO", count !="NA")
+femi <- Fecundity %>% filter(species == "FE", count !="NA")
+laca <- Fecundity %>% filter(species == "LA", count !="NA")
+naat <- Fecundity %>% filter(species == "NA", count !="NA")
+pler <- Fecundity %>% filter(species == "PL", count !="NA")
+saco <- Fecundity %>% filter(species == "SA", count !="NA")
+urli <- Fecundity %>% filter(species == "UR", count !="NA")
 
+quantile(acwr$count, prob=c(.25,.5,.75), na.rm=TRUE)
 ```
 
