@@ -17,7 +17,7 @@ Fecundity1 <- Fecundity %>% select(species, count)
 
 Fecundity1 %>% group_by(species) %>% summarise(avg = mean(count), var = var(count))
 
-summary(acwr$count) 
+#summary(acwr$count) 
 
 ```
 
@@ -29,13 +29,7 @@ Fecundity3 <- Fecundity1 %>% filter(species %in% c("BR", "FE", "LA"))
 ggplot(Fecundity1, aes(x=species, y=count, fill=species)) + 
   geom_boxplot() + coord_flip() + theme_minimal() + labs(title = "Fecundity")
 
-ggplot(Fecundity, aes(x = species)) + 
-  geom_bar() +
-  theme_minimal(base_size = 12)
-
 ```
-
-
 
 
 ```{r}
@@ -78,5 +72,6 @@ saco <- Fecundity %>% filter(species == "SA", count !="NA")
 urli <- Fecundity %>% filter(species == "UR", count !="NA")
 
 quantile(acwr$count, prob=c(.25,.5,.75), na.rm=TRUE)
+
 ```
 
