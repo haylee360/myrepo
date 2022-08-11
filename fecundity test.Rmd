@@ -6,6 +6,20 @@ output: html_document
 ```{r}
 library(ggplot2)
 library(dplyr)
+library(xlsx)
+fecundity_prepped_naat <- fecundity_prepped_fecundity_prepped %>% filter(order !="NA") %>% mutate(order = 1:length(count))
+
+write_csv(fecundity_prepped_naat, "fecundity_prepped_NAAT.csv")
+write.xlsx(fecundity_prepped_naat, "fecundity_prepped_NAAT.xlsx")
+
+
+read.csv("Fecundity_prepped_NAAT.csv")->f
+
+boxplot(log10(f$seeds)~f$species)
+
+boxplot(log10(f$seeds)~f$plot_type)
+
+boxplot(log10(f$seeds)~f$plot_type+f$species, las=2, col="red")
 
 ```
 
