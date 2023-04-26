@@ -1,0 +1,370 @@
+---
+title: "R cheatsheet"
+output: html_document
+date: "2023-04-26"
+---
+
+```{r load-lake-data, include=FALSE}
+library(readr)
+lake_data <- read_csv("/Users/Haylee/myrepo/L05/R02_Data_mercury_lake.csv")
+```
+
+Note:  You can suppress the code and or output from r code by adding `message=FALSE` and/or `echo=False` to the code chunk description in brackets
+
+## Reading in the data
+- How to read a csv file using `read_csv()` 
+- Get to know the data using `str()`, `head()`, `dim()`, and `names()` 
+-  Manipulate the data frame using `dplyr`'s `rename()`, `select()`, `arrange()`,
+`filter()`, `mutate()`, `group_by()`, and `summarize()
+
+```{r initial-looks}
+head(lake_data)
+dim(lake_data)
+names(lake_data)
+str(lake_data)
+```
+
+head: shows first six rows of data
+dim: gives dimensions of data
+names: names of columns, names of all the variables in the data set
+str: structure of the data, gives data frame, name of variables, the numeric/character, and some of the values. A general summary 
+
+## Using `dplyr` functions to work with the data frame
+
+## Function 1: rename()
+```{r rename, echo=FALSE}
+library(dplyr)
+
+names(lake_data)
+lake_data_tidy <- lake_data %>% rename(lake_name = lakes)
+names(lake_data_tidy)
+
+#You can rename multiple variables at once
+lake_data_tidy <- lake_data %>% rename(lake_name = lakes, 
+                                       ph_level = ph)
+```
+
+## Function 2: select()
+```{r select}
+smaller_data <- lake_data %>% select(lakes, ph, chlorophyll)
+names(smaller_data)
+#We use `select()` to select a subset of **variables**. 
+#This is very handy if we inherit a large dataset with several variables that we do not need.
+
+#We can also use "negative `select()`" to deselect variables. Suppose we wanted to keep all variables except for `age_data`
+smaller_data_2 <- lake_data %>% select(- age_data)
+names(smaller_data_2)
+```
+
+## Function 3: mutate()
+- **`mutate()` is a very useful function**. 
+- It is used to add new variables to the dataset. Suppose that someone told you that the number of fish sampled was actually in hundreds, such that 5 is actually 500. 
+
+You can use mutate to add this new variable to your dataset
+```{r mutate}
+lake_data_new_fish <- lake_data %>% 
+  mutate(actual_fish_sampled = number_fish_sampled * 100)
+```
+
+## Use `%>%` to "pipe" several lines of code together
+You can think of the "pipe" operator as a "then" when you read code 
+
+Translating the code below to words:
+
+Tidy lake data is equal to lake data with a renamed lake variable, a mutate fish sample variable, and without age data and # fish sampled variables.
+```{r pipe practice}
+tidy_lake_data <- lake_data %>% 
+  rename(lake_name = lakes) %>%
+  mutate(actual_fish_sampled = number_fish_sampled * 100) %>%
+  select(- age_data, - number_fish_sampled)
+
+tidy_lake_data
+```
+
+## Function 4: `filter()`
+```{r filter practice}
+#Greater than, less than, greater/less than equal to. >=, <=, <, >
+lake_data_filtered <- lake_data %>% filter(ph > 7)
+
+#Equal to
+lake_data %>% filter(age_data == "recent")
+
+#Is not equal to
+lake_data %>% filter(age_data != "recent") 
+
+#In
+lake_data %>% filter(lakes %in% c("Alligator", "Blue Cypress")) 
+
+#Include multiple statements. The comma combines the filter statements, so we are filtering to including data with both `ph > 6` and `chlorophyll > 30`
+lake_data %>% filter(ph > 6, chlorophyll > 30)
+
+#Or, At least one of `ph > 6` or `chlorophyll > 30` needs to be true.
+lake_data %>% filter(ph > 6 | chlorophyll > 30)
+```
+
+## Functions 5 and 6: group_by() and summarize()
+`group_by() and summarize()`  group the data by a categorial variable and calculate a statistic.
+
+`mean()` and `sd()` to calculate the mean and standard deviation of variables.
+```{r group by and summarize}
+lake_data %>% 
+  group_by(age_data) %>% 
+  summarize(mean_ph = mean(ph),
+            standard_deviation_ph = sd(ph))
+```
+
+
+## ggplot
+## `geom_` commands so far
+- `geom_histogram()` to make histograms
+- `geom_point()` to make scatter plots
+- `geom_line()` to make line plots
+- `geom_boxplot()` to make box plots
+- `geom_bar() to make a bar graph
+
+## some useful options for ggplots
+- `col = "blue"`, `size = 2`, `lty = 2`, to change color, size and line type of the `geom`
+- `aes(col = race)` to *link* color to race
+- `aes(lty = sex)` to *link* line type to sex
+- `facet_wrap(~ var1)` to make separate plots for different levels of one variable
+- `facet_grid(var1 ~ var2)` to make separate plots for combinations of levels of two variables
+- `stat=identity` vs `stat=count` to tell ggplot whether it needs to calculate the percents
+- `aes(fill=sex)` to *link* color to sex in a histogram
+
+Say we want to make a scatter plot of the life expectancy for white males in California over time.
+```{r ggplot-canvas, fig.width=4, fig.height=3, echo=FALSE}
+le_data <- read_csv("Data/Life-expectancy-by-state-long.csv")
+wm_cali <- le_data %>% filter(state == "California", sex == "Male", 
+                              race == "white")
+
+## First step to building a `ggplot()`: set up the canvas
+library(ggplot2)
+ggplot(data = wm_cali, aes(x = year, y = LE)) + theme_minimal(base_size = 15)
+
+## Second step to building a `ggplot()`: tell `ggplot` how to plot the data
+ggplot(data = wm_cali, aes(x = year, y = LE)) + geom_point()
+
+## `labs()` to add a title, a caption, and modify x and y axes titles
+## `col` controls the color of geom_point()
+## `size` controls the size of geom_point()
+ggplot(data = wm_cali, aes(x = year, y = LE)) + geom_point(col = "blue", size = 4) +
+  labs(title = "Life expectancy in white men in California, 1969-2013",
+       y = "Life expectancy", 
+       x = "Year", 
+       caption = "Data from Riddell et al. (2018)")
+```
+
+## Life expectancy for white and black men in California
+What do we need to change to make a separate line for both black and white men?
+```{r plots}
+## First, update the `filter()`
+wbm_cali <- le_data %>% filter(state == "California",
+                               sex == "Male")
+
+## And change previous graph to **link** color to race
+ggplot(data = wbm_cali, aes(x = year, y = LE)) + geom_line(aes(col = race)) +
+  labs(title = "Life expectancy in black and white men in California, 1969-2013",
+       y = "Life expectancy", 
+       x = "Year", 
+       caption = "Data from Riddell et al. (2018)")
+
+```
+
+## What if we also wanted to look at women?
+```{r more plot permutations}
+cali_data <- le_data %>% filter(state == "California")
+
+## What is wrong with this plot?
+ggplot(data = cali_data, aes(x = year, y = LE)) + geom_line(aes(col = race)) +
+  labs(title = "Life expectancy in California, 1969-2013",
+       y = "Life expectancy", 
+       x = "Year", 
+       caption = "Data from Riddell et al. (2018)")
+#This just colored by race group and it connected all the dots, there's space btwn male and female operations which made it all squiggly. 
+
+## Use `lty()` to **link** line type to sex
+ggplot(data = cali_data, aes(x = year, y = LE)) + geom_line(aes(col = race, lty = sex)) +
+  labs(title = "Life expectancy in California, 1969-2013",
+       y = "Life expectancy", 
+       x = "Year", 
+       caption = "Data from Riddell et al. (2018)")
+
+## Use `facet_wrap()` to make separate plots for a specified variable
+ggplot(data = cali_data, aes(x = year, y = LE)) + 
+  geom_line(aes(col = race, lty = sex)) +
+  labs(title = "Life expectancy in California, 1969-2013",
+       y = "Life expectancy", 
+       x = "Year", 
+       caption = "Data from Riddell et al. (2018)") +
+  facet_wrap(~ sex)
+
+## What would this look like as a bar chart?
+ggplot(data = cali_data, aes(x =year, y=LE)) + 
+  geom_line(stat = "identity", aes(col=race)) +
+  labs(title = "Life expectancy in California, 1969-2013",
+       y = "Life expectancy", 
+       x = "Year", 
+       caption = "Data from Riddell et al. (2018)") +
+  facet_wrap(~ sex + race)
+
+## Draw a histogram for Life expectancy in one year (2013)
+data_2013 <- le_data %>% filter(year == 2013)
+
+ggplot(dat = data_2013, aes(x = LE)) + 
+  geom_histogram(binwidth = 1, col = "white", aes(fill = sex))  +
+    facet_grid(race ~ sex)
+#facet_grid also allows for multiple plots
+
+```
+
+
+# Regression
+## What is a regression line?
+- A straight line that is **fitted** to data to minimize the distance between the data and the fitted line. 
+- It is often called the **line of best fit**. 
+- The line of best fit can be used to describe the relationship between the 
+explanatory and response variables.
+- Can you fit a line of best fit for non-linear relationships?
+- Very important to visualize the relationship first. Why?
+
+## Equation of the line of best fit
+The line of best fit can be represented by the equation for a line:
+a= intercept, b=slope
+
+$$y = a + bx$$
+
+## Fitting a linear model in R
+
+- `lm()` is the function for a linear model.
+- The first argument that `lm()` wants is a formula `y ~ x`.
+    - `y` is the response variable from your dataset
+    - `x` is the explanatory variable
+- The second argument sent to `lm()` is the data set.
+```{r lm template}
+lm(formula = y ~ x, data = your_dataset)
+
+#Recall the manatee example from Ch.3 that examined the relationship between the number of registered `powerboats` and the number of manatee `deaths` in Florida between 1977 and 2016
+mana_data <- read_csv("Data/Ch03_Manatee-deaths.csv")
+
+#Recall that the relationship was linear by examining the scatter plot:
+mana_death1<-ggplot(mana_data, aes(x = powerboats, y = deaths)) +
+  geom_point() +
+  theme_minimal(base_size = 15)
+
+#Calculate the line of best fit: 
+mana_lm <- lm(deaths ~ powerboats, mana_data)
+library(broom) # we use the package broom to look at the output of the linear model
+tidy(mana_lm) # only pay attention to the term and estimate columns for now.
+
+# Add the regression line to the scatter plot using `geom_abline()`
+default_zoom_plot <- ggplot(mana_data, aes(x = powerboats, y = deaths)) +
+  geom_point() + 
+  labs(x = "Powerboats registered (X 1000)",
+       y = "Manatee deaths") +
+  geom_abline(intercept = -46.7520, slope = 0.1358) + 
+  coord_fixed(ratio = 5) +
+  theme_minimal(base_size = 15)
+```
+- Intercept: The predicted number of deaths if there were no powerboats. But the prediction is negative. Why?
+- Powerboats: This is the slope. What does the estimate slope for powerboats mean?
+
+## R-squared
+
+When we run a linear model, the r-squared is also calculated. Here is how to see the r-squared for the manatee data:
+```{r glance}
+glance(mana_lm)
+#Interpretation of r-squared: The fraction of the variation in the values of y that is explained by the line of best fit.
+```
+
+
+## Example using transformed data
+
+- Sometimes, the data is transformed to another scale so that the relationship
+between the transformed $x$ and $y$ is linear
+- Table 3.4 in B&M provides data on the mean number of seeds produced in a year 
+by several common tree species and the mean weight (im milligrams) of the seeds 
+produced. 
+```{r make seed dataset, echo=FALSE}
+library(tibble)
+seed_data <- tribble(~ species, ~ seed_count, ~ seed_weight,
+                       "Paper birch", 27239, 0.6,
+                       "Yellow birch", 12158, 1.6,
+                       "White spruce", 7202, 2.0,
+                       "Engelman spruce", 3671, 3.3, 
+                       "Red spruce", 5051, 3.4, 
+                       "Tulip tree", 13509, 9.1, 
+                       "Ponderosa pine", 2667, 37.7, 
+                       "White fir", 5196, 40.0, 
+                       "Sugar maple", 1751, 48.0, 
+                       "Sugar pine", 1159, 216.0, 
+                       "American beech", 463, 247, 
+                       "American beech", 1892, 247,
+                       "Black oak", 93, 1851, 
+                       "Scarlet oak", 525, 1930, 
+                       "Red oak", 411, 2475, 
+                       "Red oak", 253, 2475,
+                       "Pignut hickory", 40, 3423, 
+                       "White oak", 184, 3669, 
+                       "Chestnut oak", 107, 4535)
+
+## Scatter plot of `seed_weight` vs. `seed_count`
+ggplot(seed_data, aes(seed_count, seed_weight)) + 
+  geom_point() +
+  theme_minimal(base_size = 15)
+#- `seed_count` and `seed_weight` both vary widely. Their relationship is not linear
+```
+
+## Investigate the relationship between their logged variables
+
+- Add transformed variables to the dataset using `mutate()`. 
+- We add both log base $e$ and log base 10 variables for illustration
+```{r plot and interpret}
+seed_data <- seed_data %>% mutate(log_seed_count = log(seed_count), 
+                                  log_seed_weight = log(seed_weight),
+                                  log_b10_count = log(seed_count, 10),
+                                  log_b10_weight = log(seed_weight, 10))
+
+## Plot transformed data (log base e)
+ggplot(seed_data, aes(log_seed_count, log_seed_weight)) + 
+  geom_point() +
+  labs(x = "Log of seed count", y = "Log of seed weight", 
+       title = "Using the natural log (base e)") +
+  theme_minimal(base_size = 15)
+
+## Plot transformed data (log base 10)
+ggplot(seed_data, aes(log_b10_count, log_b10_weight)) + 
+  geom_point() +
+  labs(x = "Log of seed count", y = "Log of seed weight", 
+       title = "Using log base 10") +
+  theme_minimal(base_size = 15)
+
+#You can use either base 10 or base $e$ for class.
+#The calculations using base $e$ are easier
+
+## `lm()` on the log (base e) variables
+seed_mod <- lm(log_seed_weight ~ log_seed_count, data = seed_data)
+tidy(seed_mod)
+glance(seed_mod) %>% pull(r.squared)
+
+## `lm()` on the log (base 10) variables
+seed_mod_b10 <- lm(log_b10_weight ~ log_b10_count, data = seed_data)
+tidy(seed_mod_b10)
+glance(seed_mod_b10) %>% pull(r.squared)
+#What is different from the log base $e$ output?
+
+```
+
+## Interpretation of `lm()` when using log (base $e$) data
+
+- We use the results of the `lm()` on the log (base $e$) transformed data for making 
+predictions
+- E.g., what seed weight is predicted for a seed count of 2000?
+- Worked calculation:
+
+1. Write down the line of best fit: $log_e(seed.weight) = 15.49130 - 1.522220\times{log_e(seed.count)}$
+2. Plug in $seed.count = 2000$ into the line of best fit: $log_e(seed.weight) = 15.49130 - 1.522220\times{log_e(2000)}$
+3. Solve for seed count by exponentiating both sides: 
+$$seed.weight = exp(15.49130 - 1.522220\times{log_e(2000)})$$ (this uses the property that $e^{log_e(x)}=x$)
+$$seed.weight = 50.45$$
+
+4. Interpret: Seeds are expected to weigh 50.45 for trees having a seed count of 2000.
