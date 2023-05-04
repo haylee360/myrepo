@@ -1,0 +1,91 @@
+---
+title: "fecundity and germination test"
+output: html_document
+---
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(xlsx)
+fecundity_prepped_naat <- fecundity_prepped_fecundity_prepped %>% filter(order !="NA") %>% mutate(order = 1:length(count))
+
+write_csv(fecundity_prepped_naat, "fecundity_prepped_NAAT.csv")
+write.xlsx(fecundity_prepped_naat, "fecundity_prepped_NAAT.xlsx")
+
+
+read.csv("Fecundity_prepped_NAAT.csv")->f
+
+boxplot(log10(f$seeds)~f$species)
+
+boxplot(log10(f$seeds)~f$plot_type)
+
+boxplot(log10(f$seeds)~f$plot_type+f$species, las=2, col="red")
+
+```
+
+
+```{r}
+#Fecundity means and variances across species
+Fecundity <- Fecundity %>% filter(count !="NA") %>% transform(count = as.numeric(count)) 
+Fecundity1 <- Fecundity %>% select(species, count)
+
+Fecundity1 %>% group_by(species) %>% summarise(avg = mean(count), var = var(count))
+
+#summary(acwr$count) 
+
+```
+
+
+```{r}
+#Fecundity visualization
+Fecundity2 <- Fecundity1 %>% filter(species %in% c("AC", "PL", "SA", "UR"))
+Fecundity3 <- Fecundity1 %>% filter(species %in% c("BR", "FE", "LA"))
+ggplot(Fecundity1, aes(x=species, y=count, fill=species)) + 
+  geom_boxplot() + coord_flip() + theme_minimal() + labs(title = "Fecundity")
+
+```
+
+
+```{r}
+#Germination means and variances across species
+Germination1 <- Germination %>% filter(count !="NA") %>% transform(count = as.numeric(count)) %>% select(species, count)
+Germination1 %>% group_by(species) %>% summarise(avg = mean(count), var = var(count))
+
+```
+
+
+```{r}
+#Germination visualization
+Fecundity2 <- Fecundity1 %>% filter(species %in% c("AC", "HO", "PL", "SA", "UR"))
+Fecundity3 <- Fecundity1 %>% filter(species %in% c("BR", "FE", "LA"))
+ggplot(Germination1, aes(x=species, y=count, fill=species)) + 
+  geom_boxplot() + coord_flip() + theme_minimal() + labs(title = "Germination")
+
+ggplot(Fecundity, aes(x = species)) + 
+  geom_bar() +
+  theme_minimal(base_size = 12)
+```
+
+
+```{r}
+#extra notes
+df <- data.frame(species = c("AC","BR","HO","FE","LA","PL","SA","UR"),
+  Var= c(var(acwr$count), var(brma$count),var(homu$count),var(femi$count),var(laca$count),var(pler$count),var(saco$count),var(urli$count)),
+  SD= c(sd(acwr$count), sd(brma$count),sd(homu$count),sd(femi$count),sd(laca$count),sd(pler$count),sd(saco$count),sd(urli$count))
+)
+df
+
+acwr <- Fecundity %>% filter(species == "AC", count !="NA")
+brma <- Fecundity %>% filter(species == "BR", count !="NA")
+homu <- Fecundity %>% filter(species == "HO", count !="NA")
+femi <- Fecundity %>% filter(species == "FE", count !="NA")
+laca <- Fecundity %>% filter(species == "LA", count !="NA")
+naat <- Fecundity %>% filter(species == "NA", count !="NA")
+pler <- Fecundity %>% filter(species == "PL", count !="NA")
+saco <- Fecundity %>% filter(species == "SA", count !="NA")
+urli <- Fecundity %>% filter(species == "UR", count !="NA")
+
+quantile(acwr$count, prob=c(.25,.5,.75), na.rm=TRUE)
+
+```
+
