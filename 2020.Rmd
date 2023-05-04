@@ -1,0 +1,428 @@
+---
+title: "Ebird sample 2020 alameda"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(auk)
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+library(naniar)
+library(readxl)
+
+#auk_set_ebd_path("/Users/hayleeoyler/Downloads/ebd 2020", overwrite=FALSE) 
+#setwd("/Users/hayleeoyler/Downloads/ebd2020")
+
+alameda_20 <- read.delim(file.choose())
+alameda_20 <- alameda_20 %>% dplyr::select("COMMON.NAME", "SCIENTIFIC.NAME","SUBSPECIES.COMMON.NAME", "SUBSPECIES.SCIENTIFIC.NAME", "OBSERVATION.COUNT", "LOCALITY", "LATITUDE", "LONGITUDE", "OBSERVATION.DATE", "OBSERVER.ID") %>% mutate(Day = format(as.Date(alameda_20$OBSERVATION.DATE, format = "%Y-%m-%d"), "%d"), 
+         Month = format(as.Date(alameda_20$OBSERVATION.DATE, format = "%Y-%m-%d"), "%m"), 
+         Year = format(as.Date(alameda_20$OBSERVATION.DATE, format = "%Y-%m-%d"), "%Y"))
+length(unique(alameda_20$OBSERVER.ID))  
+#1641
+
+#ggplot(a_20_my, aes(x=Month)) + geom_bar() + labs(x="Month", y="Observation Count", title = "Number of Observations by Month from 2020") + theme_minimal()
+
+#Combining yearly datasets into one 
+a20_19 <- rbind(alameda_20, alameda_19)
+a19_18 <- rbind(alameda_19, alameda_18)
+a18_17 <- rbind(alameda_18, alameda_17)
+a20_17 <- rbind(a20_19, a18_17)
+
+ss <- a20_17 %>% filter(SUBSPECIES.COMMON.NAME== "Song Sparrow (pusillula)")
+ss20_17 <- rbind(a20_17, ss)
+
+ss20_17_na <- ss20_17 %>% replace_with_na(replace = list(OBSERVATION.COUNT = "X")) %>% drop_na()
+unique(ss20_17_na$OBSERVATION.COUNT)
+
+a20_17_f <- as.numeric(a20_17$OBSERVATION.COUNT)
+a20_17_na <- a20_17 %>% replace_with_na(replace = list(OBSERVATION.COUNT = "X"))
+
+length(unique(a20_19$OBSERVER.ID))
+#2453
+1641+1424= 3065
+3065-2453= 612 
+
+length(unique(a19_18$OBSERVER.ID))
+#2222
+1424+1394=2818
+
+length(unique(a18_17$OBSERVER.ID))
+#2176
+
+length(unique(a20_17$OBSERVER.ID))
+#3784
+
+#Plotting
+#facet_wrapped observations
+ggplot(a20_17, aes(x=Month)) + geom_bar(fill="midnightblue") + facet_wrap("Year") + labs(x="Month", y="Observation Count", title = "Number of Observations by Year from 2017-2020") + theme_minimal()
+
+#Total obs
+ggplot(a20_17, aes(x=Year)) + geom_bar() + labs(x="Year", y="Observation Count", title = "Number of Observations by Year from 2017-2020") + theme_minimal()
+```
+
+New species of concern graph
+```{r}
+allconcern <-filter(a20_17_X, COMMON.NAME %in% 
+                      c("American White Pelican", "Tri-colored Blackbird","Brant","Burrowing Owl","Vaux's
+                        Swift","Olive-sided Flycatcher","Vermilion Flycatcher","Loggerhead Shrike","Purple
+                        Martin","Black Skimmer","Long-eared Owl","Short-eared Owl",
+                        "Black Swift","Yellow-breasted Chat","Yellow-headed Blackbird"))
+ss <- filter(a20_17_X, SUBSPECIES.COMMON.NAME == "Song Sparrow (pusillula)")
+allconcern <- rbind(allconcern, ss)
+allconcern$ObservationCount <- as.numeric(allconcern$ObservationCount)
+sum(as.numeric(allconcern$ObservationCount))
+#78774
+
+concern_20 <- allconcern %>% filter(Year == "2020")
+sum(concern_20$ObservationCount)
+(36515/374568)*100= 9.748564
+concern_19 <- allconcern %>% filter(Year == "2019")
+sum(concern_19$ObservationCount)
+5211/2072426*100= 0.2514444
+concern_18 <- allconcern %>% filter(Year == "2018")
+sum(concern_18$ObservationCount)
+20974/2757879*100= 0.760512
+concern_17 <- allconcern %>% filter(Year == "2017")
+sum(concern_17$ObservationCount)
+16074/3328220*100= 0.4829609
+
+concern_year <- data.frame(Year = c("2020", "2019","2018","2017"),
+                           PercentObservations = c(9.748564, 0.2514444, 0.760512, 0.4829609),
+                           Observations = c(36515, 5211, 20974, 16074),
+                           percobs = c(0.2154542, 0.1886959, 0.1758383, 0.1493923))
+ggplot(concern_year, aes(x=Year, y=percobs)) + geom_bar(stat="identity", fill = "chocolate2") + labs(x="Year", y="Percent", title = "Standardized Observations of Species of Concern") + theme_minimal()
+
+ggplot(concern_20, aes(x= COMMON.NAME, y=ObservationCount, Fill=COMMON.NAME)) + geom_bar(stat="identity") + labs(x="Species", y="Observations", title = "Observations of Species of Concern by Species") + theme_minimal() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+ggplot(concern_19, aes(x= COMMON.NAME, y=ObservationCount, Fill=COMMON.NAME)) + geom_bar(stat="identity") + labs(x="Species", y="Observations", title = "Observations of Species of Concern by Species") + theme_minimal() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+ggplot(wo_awp, aes(x= COMMON.NAME, y=ObservationCount, Fill=COMMON.NAME)) + facet_wrap("Year") + geom_bar(stat="identity") + labs(x="Species", y="Observations", title = "Observations of Species of Concern by Species") + theme_minimal() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+wo_awp <- allconcern %>% filter(COMMON.NAME != "American White Pelican")
+awp <- allconcern %>% filter(COMMON.NAME %in% c("American White Pelican", "Brant"))
+ggplot(allconcern_mon, aes(x= Year, y=ObservationCount)) + geom_bar(stat="identity", fill="midnightblue") + labs(x="Year", y="Observations", title = "Observations of Species of Concern by Year") + theme_minimal()
+```
+
+
+```{r}
+#Gives count by species sorted from most to least common. 
+a20_17_X %>% count(COMMON.NAME, sort = TRUE)
+length()
+```
+
+Following one observer
+```{r}
+#146 total, 75 out in march 23 out in december
+23/146= 0.1575342
+user20 <- alameda_20 %>% filter(OBSERVER.ID %in% march_obs$OBSERVER.ID)
+user20 <- user20 %>% group_by(OBSERVER.ID) %>% summarise(first = min(OBSERVATION.DATE),
+                                                         last = max(OBSERVATION.DATE))
+user20 <- user20 %>% mutate(Day = format(as.Date(user20$last, format = "%Y-%m-%d"), "%d"), 
+         Month = format(as.Date(user20$last, format = "%Y-%m-%d"), "%m"), 
+         Year = format(as.Date(user20$last, format = "%Y-%m-%d"), "%Y"))
+user20_3 <- user20 %>% filter(Month == "03")
+user20_4 <- user20 %>% filter(Month == "04")
+user20_5<- user20 %>% filter(Month == "05")
+user20_6 <- user20 %>% filter(Month == "06")
+user20_7 <- user20 %>% filter(Month == "07")
+user20_8 <- user20 %>% filter(Month == "08")
+user20_9 <- user20 %>% filter(Month == "09")
+user20_10 <- user20 %>% filter(Month == "10")
+user20_11 <- user20 %>% filter(Month == "11")
+user20_12 <- user20 %>% filter(Month == "12")
+
+userdf <- data.frame(Month = 2:12,
+                     Count = c(0, 75, 11, 4, 3, 3, 5, 2, 10, 10, 23),
+                     Year = "2020")
+ggplot(userdf, aes(x=Month, Y=Count)) + geom_line(aes(Y=Count))+ theme_minimal()
+ggplot(userdf, aes(x= Month, y=Count)) + geom_bar(stat="identity", fill="midnightblue") + labs(x="Month", y="Count", title = "Month of last observation from new users in March 2020") + theme_minimal() + scale_x_continuous(breaks = c(2:12))
+
+user20.18 <- rbind(userdf, userdf18)
+user20.17 <- rbind(user20.18, userdf17)
+userdf3 <- data.frame(Month = 2:12,
+                     Count20 = c(0,75, 11, 4, 3, 3, 5, 2, 10, 10, 23),
+                     Count18 = c(106, 0, 4, 6, 3, 0, 8, 6, 9, 15, 29),
+                     Count17 = c(0, 77, 4, 5, 3, 2, 6, 3, 5, 11, 18))
+
+ggplot(user20.17, aes(x= Month, y=Count)) + facet_wrap("Year") + geom_bar(stat="identity", fill="forestgreen") + labs(x="Month", y="User count", title = "Month of last observation from new users in March/February") + theme_classic() + scale_x_continuous(breaks = c(2:12))
+
+```
+
+
+New observers each month
+```{r}
+#Number of observers in 2020
+length(unique(alameda_20$OBSERVER.ID))
+#1641
+
+#Create objects by months X and Y
+obs_20_1 <- filter(alameda_20, Month == "01")
+obs_20_2 <- filter(alameda_20, Month == "02")
+obs_20_3 <- filter(alameda_20, Month == "03")
+obs_20_4 <- filter(alameda_20, Month == "04")
+obs_20_5 <- filter(alameda_20, Month == "05")
+obs_20_6 <- filter(alameda_20, Month == "06")
+obs_20_7 <- filter(alameda_20, Month == "07")
+obs_20_8 <- filter(alameda_20, Month == "08")
+obs_20_9 <- filter(alameda_20, Month == "09")
+obs_20_10 <- filter(alameda_20, Month == "10")
+obs_20_11 <- filter(alameda_20, Month == "11")
+obs_20_12 <- filter(alameda_20, Month == "12")
+
+
+#UNIQUE JANUARY
+jan_20_uniq <- filter(obs_20_1, !(OBSERVER.ID %in% alameda_19))
+length(unique(jan_19_uniq$OBSERVER.ID))
+#426
+#437
+
+#UNIQUE FEBRUARY
+#make unique object for month X
+jan_obs <- unique(obs_20_1$OBSERVER.ID)
+
+#Filter unique object month X from month Y. Take length of unique filtered month Y.
+feb_obs <- filter(obs_20_2, !(OBSERVER.ID %in% jan_obs))
+#feb_obs_2 <- obs_20_2 %>% filter(!OBSERVER.ID %in% jan_obs) Both versions work
+length(unique(feb_obs_2$OBSERVER.ID))
+#708
+#232
+
+#UNIQUE MARCH
+month1.2 <- filter(alameda_20, Month %in% c("01","02"))
+two_month <- unique(month1.2$OBSERVER.ID)
+march_obs <- filter(obs_20_3, !(OBSERVER.ID %in% two_month))
+march_obs <- filter(obs_20_3, !(OBSERVER.ID %in% alameda_19))
+length(unique(march_obs$OBSERVER.ID))
+#4840
+#146
+
+#UNIQUE APRIL
+month1.3 <- filter(alameda_20, Month %in% c("01","02","03"))
+three_month <- unique(month1.3$OBSERVER.ID)
+april_obs <- filter(obs_20_4, !(OBSERVER.ID %in% three_month))
+length(unique(april_obs$OBSERVER.ID))
+#3236
+#119
+
+#UNIQUE MAY
+month1.4 <- filter(alameda_20, Month %in% c("01","02","03","04"))
+four_month <- unique(month1.4$OBSERVER.ID)
+may_obs <- filter(obs_20_5, !(OBSERVER.ID %in% four_month))
+length(unique(may_obs$OBSERVER.ID))
+#2722
+#134
+
+#UNIQUE JUNE
+month1.5 <- filter(alameda_20, Month %in% c("01","02","03","04","05"))
+five_month <- unique(month1.5$OBSERVER.ID)
+june_obs <- filter(obs_20_6, !(OBSERVER.ID %in% five_month))
+length(unique(june_obs$OBSERVER.ID))
+#1191
+#90
+
+#UNIQUE JULY
+month1.6 <- filter(alameda_20, Month %in% c("01","02","03","04","05","06"))
+six_month <- unique(month1.6$OBSERVER.ID)
+july_obs <- filter(obs_20_7, !(OBSERVER.ID %in% six_month))
+length(unique(july_obs$OBSERVER.ID))
+#1850
+#86
+
+#UNIQUE AUGUST
+month1.7 <- filter(alameda_20, Month %in% c("01","02","03","04","05","06","07"))
+seven_month <- unique(month1.7$OBSERVER.ID)
+august_obs <- filter(obs_20_8, !(OBSERVER.ID %in% seven_month))
+length(unique(august_obs$OBSERVER.ID))
+#1363
+#72
+
+#UNIQUE SEPTEMBER
+month1.8 <- filter(alameda_20, Month %in% c("01","02","03","04","05","06","07","08"))
+eight_month <- unique(month1.8$OBSERVER.ID)
+sept_obs <- filter(obs_20_9, !(OBSERVER.ID %in% eight_month))
+length(unique(sept_obs$OBSERVER.ID))
+#1024
+#52
+
+#UNIQUE OCTOBER
+month1.9 <- filter(alameda_20, Month %in% c("01","02","03","04","05","06","07","08","09"))
+nine_month <- unique(month1.9$OBSERVER.ID)
+oct_obs <- filter(obs_20_10, !(OBSERVER.ID %in% nine_month))
+length(unique(oct_obs$OBSERVER.ID))
+#2070
+#92 
+
+#UNIQUE NOVEMBER
+month1.10 <- filter(alameda_20, Month %in% c("01","02","03","04","05","06","07","08","09","10"))
+ten_month <- unique(month1.10$OBSERVER.ID)
+nov_obs <- filter(obs_20_11, !(OBSERVER.ID %in% ten_month))
+length(unique(nov_obs$OBSERVER.ID))
+#3528
+#90
+
+#UNIQUE DECEMBER
+month1.11 <- filter(alameda_20, Month %in% c("01","02","03","04","05","06","07","08","09","10","11"))
+eleven_month <- unique(month1.11$OBSERVER.ID)
+dec_obs <- filter(obs_20_12, !(OBSERVER.ID %in% eleven_month))
+length(unique(dec_obs$OBSERVER.ID))
+#1743
+#102
+
+total_new <- data.frame(Month = c(1:12), 
+                        New_observers = c(0,708,4840,3236,2722,1191,1850,1363,1024,2070,3528,1743))
+total_new_2 <- data.frame(Month = c(1:12), 
+                        New_observers = c(437,232,146,119,134,90,86,72,52,92,90,102))
+
+ggplot(total_new_2, aes(x=Month, y=New_observers)) + geom_line()+ labs(x="Month", y="Number of new Users", title = "Number of new users by month in 2020") +theme_minimal() + scale_x_continuous(breaks = c(1:12))
+
+dailymean <- data.frame(Year = c(2020, 2019, 2018, 2017), 
+                        mean_observations = c(10270.05, 8528.914, 9071.97, 9118.411))
+
+ggplot(dailymean, aes(x=Year, y=mean_observations)) + geom_line()+ labs(x="Year", y="Daily mean observations", title = "Daily mean observations by year") +theme_minimal() 
+
+```
+
+Individual species by month
+```{r}
+#graph by raptor species 
+raptor <-filter(a_20_my, COMMON.NAME %in% c("Bald Eagle", "Golden Eagle", "White-Tailed Kite", "Peregrine Falcon"))
+ggplot(raptor, aes(x=Month)) +geom_bar() + facet_wrap("Year") + labs(x="Month", y="Observation Count", title = "Observation of Raptors by Month from 2017-2020") + theme_minimal()
+
+#graph by bald eagle
+b_eagle <- filter(a20_17, COMMON.NAME == "Bald Eagle")
+ggplot(b_eagle, aes(x=Month)) +geom_bar() + facet_wrap("Year") + labs(x="Month", y="Observation Count", title = "Observations of Bald Eagles by Month from 2017-2020") + theme_minimal()
+
+```
+
+Start and end dates by observer
+```{r}
+#
+jan_obs <- unique(obs_20_1$OBSERVER.ID)
+jan_obs_1 <- a_20_my %>% filter(OBSERVER.ID %in%jan_obs)
+```
+
+California bird species of special concern
+```{r}
+prior1 <-filter(a_20_my, COMMON.NAME %in% 
+                  c("American White Pelican", "Tri-colored Blackbird"))
+prior2 <-filter(a_20_my, COMMON.NAME %in% 
+                  c("Brant","Burrowing Owl","Vaux's Swift","Olive-sided Flycatcher","Vermilion Flycatcher","Loggerhead
+                    Shrike","Purple Martin"))
+prior3 <-filter(a_20_my, COMMON.NAME %in% 
+                  c("Black Skimmer","Long-eared Owl","Short-eared Owl","Black Swift","Yellow-breasted Chat","Song
+                    Sparrow","Yellow-headed Blackbird"))
+allconcern <-filter(a20_17_X, COMMON.NAME %in% 
+                      c("American White Pelican", "Tri-colored Blackbird","Brant","Burrowing Owl","Vaux's
+                        Swift","Olive-sided Flycatcher","Vermilion Flycatcher","Loggerhead Shrike","Purple
+                        Martin","Black Skimmer","Long-eared Owl","Short-eared Owl",
+                        "Black Swift","Yellow-breasted Chat","Yellow-headed Blackbird"))
+ss <- filter(a20_17_X, SUBSPECIES.COMMON.NAME == "Song Sparrow (pusillula)")
+allconcern <- rbind(allconcern, ss)
+
+#p1 <- c("American White Pelican", "Tri-colored Blackbird")
+#p2 <- c("Brant","Burrowing Owl","Vaux's Swift","Olive-sided Flycatcher","Vermilion Flycatcher","Loggerhead Shrike","Purple Martin")
+#p3 <- c("Black Skimmer","Long-eared Owl","Short-eared Owl","Black Swift","Yellow-breasted Chat","Song Sparrow","Yellow-headed Blackbird")
+
+sorted_concern <- allconcern %>% mutate(Priority = case_when(
+       COMMON.NAME %in% c("American White Pelican", "Tri-colored Blackbird") ~ "1",
+       COMMON.NAME %in% c("Brant","Burrowing Owl","Vaux's Swift","Olive-sided Flycatcher","Vermilion Flycatcher","Loggerhead Shrike","Purple Martin") ~ "2",
+       COMMON.NAME %in% c("Black Skimmer","Long-eared Owl","Short-eared Owl","Black Swift","Yellow-breasted Chat","Song Sparrow","Yellow-headed Blackbird") ~ "3"))
+
+#Filtering just one month
+graph_concern <- sorted_concern %>% select("Month", "OBSERVATION.COUNT", "Priority") %>% filter(Month == "02")
+
+#Stacked bar chart
+ggplot(graph_concern, aes(fill=Priority, x= Month, y=OBSERVATION.COUNT)) +geom_bar(position = "stack", stat="Identity") + labs(x="Month", y="Observation Count", title = "Observation of Birds of Concern by Month in 2020") + theme_minimal()
+?summarise_if()
+
+#Dodged bar chart
+ggplot(graph_concern, aes(fill=Priority, x= Month, y=OBSERVATION.COUNT)) +geom_bar(position = "dodge", stat="Identity") + labs(x="Month", y="Observation Count", title = "Observation of Birds of Concern by Month in 2020") + theme_minimal()
+
+#Trying to figure out how to sum the number of observations in each priority 
+p1 <- graph_concern %>% filter(Priority == "1")
+colSums(p1, na.rm = TRUE, dims = 2)
+p1 %>% sum("OBSERVATION.COUNT")
+sum(p1$OBSERVATION.COUNT)
+
+p1$OBSERVATION.COUNT["X"] <- 1
+
+p1_mod <- p1 %>% replace_with_na(replace = list(OBSERVATION.COUNT = "X")) %>% drop_na()
+sum(as.numeric(p1_mod$OBSERVATION.COUNT))
+unique(p1_mod$OBSERVATION.COUNT)
+
+
+ggplot(raptor, aes(x=Month)) +geom_bar() + facet_wrap("Year") + labs(x="Month", y="Observation Count", title = "Observation of Raptors by Month from 2017-2020") + theme_minimal()
+```
+
+Species by month
+```{r}
+obs_20_1 <- filter(a_20_my, Month == "01")
+obs_20_2 <- filter(a_20_my, Month == "02")
+obs_20_3 <- filter(a_20_my, Month == "03")
+obs_20_4 <- filter(a_20_my, Month == "04")
+obs_20_5 <- filter(a_20_my, Month == "05")
+obs_20_6 <- filter(a_20_my, Month == "06")
+obs_20_7 <- filter(a_20_my, Month == "07")
+obs_20_8 <- filter(a_20_my, Month == "08")
+obs_20_9 <- filter(a_20_my, Month == "09")
+obs_20_10 <- filter(a_20_my, Month == "10")
+obs_20_11 <- filter(a_20_my, Month == "11")
+obs_20_12 <- filter(a_20_my, Month == "12")
+
+#this didn't work. not entirely sure what i was trying to do here. 
+#species_df <- data.frame(Month = c(1:12), species = c(unique(obs_20_1$COMMON.NAME), unique(obs_20_2$COMMON.NAME), unique(obs_20_3$COMMON.NAME), unique(obs_20_4$COMMON.NAME), unique(obs_20_5$COMMON.NAME), unique(obs_20_6$COMMON.NAME), unique(obs_20_7$COMMON.NAME), unique(obs_20_8$COMMON.NAME), unique(obs_20_9$COMMON.NAME), unique(obs_20_10$COMMON.NAME), unique(obs_20_11$COMMON.NAME), unique(obs_20_12$COMMON.NAME))) 
+
+unique(obs_20_1$COMMON.NAME)
+unique(obs_20_2$COMMON.NAME)
+unique(obs_20_3$COMMON.NAME)
+unique(obs_20_4$COMMON.NAME)
+unique(obs_20_5$COMMON.NAME)
+unique(obs_20_6$COMMON.NAME)
+unique(obs_20_7$COMMON.NAME)
+unique(obs_20_8$COMMON.NAME)
+unique(obs_20_9$COMMON.NAME)
+unique(obs_20_10$COMMON.NAME)
+unique(obs_20_11$COMMON.NAME)
+unique(obs_20_12$COMMON.NAME)
+```
+
+Extra
+```{r}
+#Set date format 
+as.Date(a_data_1$OBSERVATION.DATE, format = "%Y-%m-%d")
+
+#add variable and create dataframe with only X and Y variables
+a_month <- a_data_1 %>% mutate(Month = format(as.Date(a_data_1$OBSERVATION.DATE, format = "%Y-%m-%d"), "%m"))
+a_month_2 <- a_month %>% select(OBSERVATION.COUNT, Month)
+
+ggplot(a_data_1, aes(x=OBSERVATION.DATE)) + geom_histogram(bins = 12) + labs(x="Months", y="Species Count") + theme_minimal()
+
+#Bar plot 
+ggplot(a_month_2, aes(x=Month)) + geom_bar() + labs(x="Month", y="Observation Count", title = "Number of Observations by Month in 2020") + theme_minimal()
+
+#Get number of unique species 
+a_month_2 <- a_month %>% select(OBSERVATION.COUNT, Month)
+unique(a_month$COMMON.NAME)
+length(unique(a_month$COMMON.NAME))
+#390
+
+#Add Month Column
+a_month <- a_data_1 %>% mutate(Month = format(as.Date(a_data_1$OBSERVATION.DATE, format = "%Y-%m-%d"), "%m"))
+
+#Add Year Column
+a_month_year <- a_month %>% mutate(Year = format(as.Date(a_month$OBSERVATION.DATE, format = "%Y-%m-%d"), "%Y"))
+
+#Trying to subset by species
+hummingbird <- filter(a_20_my, COMMON.NAME == "Allen's Hummingbird")
+byday <- aggregate(cbind(Melbourne,Southern,Flagstaff)~Date,
+             data=data,FUN=sum)
+library(lubridate)
+bymonth <- aggregate(cbind(Melbourne,Southern,Flagstaff)~month(Date),
+             data=data,FUN=sum) 
+
+hums <- filter(a_20_my, COMMON.NAME %in% c("Allen's Hummingbird","Anna's Hummingbird", "Rufous Hummingbird"))
+
+hum_march_20 <- filter(a_20_my, COMMON.NAME == "Allen's Hummingbird" & Month == "03")
+```

@@ -1,0 +1,59 @@
+
+```{r}
+devtools::install_github("mikeyEcology/MLWIC2")
+library(MLWIC2)
+library(PressPurt)
+options(timeout=600)
+
+MLWIC2::setup(python_loc = "/Users/hayleeoyler/miniconda3/envs/r-reticulate/bin/python",gpu = FALSE, r_reticulate = TRUE)
+MLWIC2:: setup()
+```
+Error message 1
+WARNING conda.core.path_actions:verify(962): Unable to create environments file. Path not writable.
+  #environment location: /Users/hayleeoyler/.conda/environments.txt
+
+Error message 2
+WARNING conda.core.envs_manager:register_env(50): Unable to register environment. Path not writable or missing.
+  #environment location: /opt/anaconda3/envs/r-reticulate
+  #registry file: /Users/hayleeoyler/.conda/environments.txt
+
+/Users/hayleeoyler/Library/r-miniconda
+python location: /Users/hayleeoyler/miniconda3/envs/r-reticulate/bin/python
+conda location: /Users/hayleeoyler/miniconda3/condabin/conda 
+
+```{r}
+create_conda_env(condaenv="PressPurtEnv", 
+                  version="/opt/anaconda3/bin/python3", 
+                  verbose = TRUE)
+py_depend(condaenv = "PressPurtEnv")
+set_python_conda(condaenv="PressPurtEnv")
+MLWIC2::runShiny('make_input')
+setwd("/Users/hayleeoyler/Desktop/MLWIC_examples-master")
+
+classify(path_prefix = "/Users/hayleeoyler/Desktop/MLWIC_examples-master/images", # this is the absolute path to the images. 
+         data_info = "/Users/hayleeoyler/Desktop/MLWIC_examples-master/image_labels.csv", # this is the location of the csv containing image information. It has Unix linebreaks and no headers.
+         model_dir = "/Users/hayleeoyler/Desktop/MLWIC_examples-master", # assuming this is where you stored the L1 folder in Step 3 of the instructions: github.com/mikeyEcology/MLWIC/blob/master/README
+         python_loc = "/Users/hayleeoyler/miniconda3/envs/r-reticulate/bin/", # the location of Python on your computer. 
+         save_predictions = "model_predictions.txt", # this is the default and you should use it unless you have reason otherwise.
+         os = "Mac"
+         )
+```
+Your `data_info` file exists: /Users/hayleeoyler/Desktop/MLWIC_examples-master/image_labels.csv.
+Your `path_prefix exists: /Users/hayleeoyler/Desktop/MLWIC_examples-master/images.
+You are not using a Windows computer.
+/opt/anaconda3/bin/python: can't open file 'run.py': [Errno 2] No such file or directory
+The classify function did not run properly.
+
+```{r}
+find_python()
+#environment location: /Users/hayleeoyler/.conda/environments.txt
+
+input_file(data_info.csv)
+make_input(data_info.csv)
+
+library(devtools) # load package
+devtools::install_github("r-lib/pkgbuild") # install updated version of pkgbuild from GitHub
+library(pkgbuild) # load package
+find_rtools() # should be TRUE, assuming you have Rtools 3.5
+```
+

@@ -1,0 +1,572 @@
+---
+title: "auk 2"
+output: html_document
+---
+New observation graph
+```{r}
+ggplot(a20_17_X, aes(y=ObservationCount, x=Year)) + 
+    geom_bar(stat="identity") + theme_minimal() + labs(title = "Total Observation by Year", x= "Year", y= "Count")
+```
+
+
+LC %
+```{r}
+LCData <- read_excel("Documents/LCdata.xlsx")
+
+ggplot(LCData, aes(fill=LandCover, y=Observations, x=Year)) + 
+    geom_bar(position="stack", stat="identity") + theme_minimal()
+
+ggplot(LCData, aes(fill=LandCover, y=Percent, x=Year)) + 
+    geom_bar(position="stack", stat="identity") + theme_minimal() + labs(title = "Percent Observations by Land Cover", x= "Year", y= "Fraction")
+```
+SoC ANOVA
+```{r}
+allconcern_mon <- filter(allconcern, Month %in% c("01","02","04","05", "09", "10", "11"))
+sc_aov <- aov(ObservationCount ~ Year, allconcern_mon)
+summary(sc_aov)
+TukeyHSD(sc_aov)
+
+```
+
+
+Stats 2?
+```{r}
+aov_data <- a20_17_na %>% dplyr::select("OBSERVATION.COUNT", "OBSERVER.ID", "OBSERVATION.DATE", "Year", "Month", "COMMON.NAME", "SCIENTIFIC.NAME")
+an2 <- aov(OBSERVATION.COUNT ~ Year, aov_data)
+aov_month <- aov(ObservationCount ~ Year, month_filt)
+summary(aov_month)
+TukeyHSD(aov_month)
+summary(an2)
+TukeyHSD(an2)
+
+a20_17_f <- as.numeric(a20_17$OBSERVATION.COUNT)
+a20_17_na <- a20_17 %>% replace_with_na(replace = list(OBSERVATION.COUNT = "X")) 
+a20_17_X <- a20_17 %>% mutate(ObservationCount = recode(a20_17$OBSERVATION.COUNT, X = "1"))
+group_obs_20 <- a20_17 %>% filter(Year == "2020") %>% group_by(Month)
+group_obs_20 %>% summarise(meanobs = mean(as.numeric(group_obs_20$OBSERVATION.COUNT)))
+length(as.numeric(a20_17_X$ObservationCount))
+#11932571
+plot # AVG of obs and confidence 
+
+month_filt <- filter(a20_17_X, Month %in% c("01","02","04","05", "09", "10", "11"))
+
+#Didnt work 
+#month_filt %>% group_by(Year) %>% sum(as.numeric(month_filt$ObservationCount))
+
+filt_df <- data.frame(Year = c("2020", "2019", "2018", "2017"),
+                      ObservationCount = c(2078572, 1725748, 1920339, 1866475),
+                      upper = c())
+ggplot(filt_df, aes(y=ObservationCount, x=Year)) + 
+    geom_bar(stat="identity", fill = "midnightblue") + theme_minimal() + labs(x="Year", y="Count", title = "Total Standarized Observations by Year ")
+
+month_filt_20 <- filter(month_filt, Year == "2020")
+sum(as.numeric(month_filt_20$ObservationCount))
+#2078572
+month_filt_19 <- filter(month_filt, Year == "2019")
+sum(as.numeric(month_filt_19$ObservationCount))
+#1725748
+month_filt_18 <- filter(month_filt, Year == "2018")
+sum(as.numeric(month_filt_18$ObservationCount))
+#1920339
+month_filt_17 <- filter(month_filt, Year == "2017")
+sum(as.numeric(month_filt_17$ObservationCount))
+#1866475
+
+ggplot(tgc, aes(x=dose, y=len, colour=supp)) + 
+    geom_errorbar(aes(ymin=len-se, ymax=len+se), width=.1) +
+    geom_line() +
+    geom_point()
+```
+
+Stats
+```{r}
+library(readxl)
+thesis_data <- read_excel("Documents/thesis_data.xlsx")
+View(thesis_data)
+
+#Observation ANOVA
+thesis_data$year <- as.numeric(thesis_data$year)
+thesis_data$year <- as.factor(thesis_data$year)
+anova <- aov(mean.observations ~ year, thesis_data)
+anova_1 <- aov(mean.observations ~ year.factor, thesis_data)
+anova_2 <- aov(mean.observations ~ as.factor(thesis_data$year), thesis_data)
+summary(anova) #p= 0.487, f=0.715 
+summary(anova_1)
+TukeyHSD(anova_2)
+```
+
+2020
+```{r}
+#Observers ANOVA
+anova_ppl <- aov(mean.observers ~ year.factor, thesis_data)
+summary(anova_ppl) #p= 0.475, f=0.759 
+TukeyHSD(anova_ppl)
+
+#Chi squared for land cover 
+chi_data <- data20_19 %>% dplyr::select(Year, LandCover, OBSERVATION.COUNT)
+data_sub <- data_sub %>% replace_with_na(replace = list(OBSERVATION.COUNT = "X")) %>% drop_na()
+chi_data$geometry <- NULL
+chisq <- chisq.test(chi_data)
+chisq$p.value
+chisq$observed
+#p= 3.615258e-56
+#Tells us that yes, there is a association between urban and non-urban observations which was expected, how do i look betwen 
+
+#linear regresssion
+df_urban <- df_month %>% filter(LandCover == "Urban")
+lm(ObservationCount ~ Month, df_urban)
+library(auk)
+library(sf)
+library(raster)
+library(tidyverse)
+library(mapview)
+
+#getOption("timeout")
+#options(timeout = 600)
+
+#auk_set_ebd_path("/Users/Kendall/Desktop/eBird", overwrite = TRUE)
+
+#auk_ebd("/Users/Kendall/Desktop/eBird/ebdalameda.txt", sep = "\t")
+
+#ebird <- read_ebd("/Users/Kendall/Desktop/eBird/ebdalameda.txt", sep = "\t", unique = TRUE, rollup = TRUE)
+
+data <- st_as_sf(alameda_20, coords = c('LONGITUDE', 'LATITUDE'), crs = "+init=epsg:4326")
+
+data <- st_transform(data, crs = "+proj=utm +zone=10 ellps=WGS84")
+
+#Environmental Data
+#This is a raster layer with 13 different land cover categories
+WHR13 <- raster("/Users/hayleeoyler/Desktop/WHR13.tif")
+WHR13 <- projectRaster(WHR13, crs = "+proj=utm +zone=10 ellps=WGS84")
+
+#Create a function to format the raster, finds
+
+ Mode <- function(x, na.rm = FALSE) {
+    if(na.rm){
+      x = subset(x, !is.na(x))
+    }
+
+    ux <- unique(x)
+    return(ux[which.max(tabulate(match(x, ux)))])
+  }
+ 
+#extracting raster values for land cover types to each spatial point where an observation was made
+data <- data %>%
+  mutate(LandCover = raster::extract(WHR13, as(., "Spatial"), na.rm = TRUE))
+
+#Need to round to closest whole number, since raster is continuous values
+data$LandCover <- round(data$LandCover)
+
+#Transform these numbers into categorical variables
+data$LandCover <- as.factor(data$LandCover)
+
+#Of the 13 land cover classes, 1 is urban (#). This code labels each observation as urban or non-urban
+data$LandCover <- recode(data$LandCover, 
+         `1` = "Non-Urban",
+         `2` = "Non-Urban",
+         `3` = "Non-Urban",
+         `4` = "Non-Urban",
+         `5` = "Non-Urban",
+         `6` = "Non-Urban",
+         `7` = "Urban",
+         `8` = "Non-Urban",
+         `9` = "Non-Urban",
+         `10` = "Non-Urban",
+         `11` = "Non-Urban",
+         `12` = "Non-Urban",
+         `13` = "Non-Urban")
+
+```
+2019
+```{r}
+data_19 <- st_as_sf(alameda_19, coords = c('LONGITUDE', 'LATITUDE'), crs = "+init=epsg:4326")
+
+data_19 <- st_transform(data_19, crs = "+proj=utm +zone=10 ellps=WGS84")
+
+#Environmental Data
+#This is a raster layer with 13 different land cover categories
+WHR13 <- raster("/Users/hayleeoyler/Desktop/WHR13.tif")
+WHR13 <- projectRaster(WHR13, crs = "+proj=utm +zone=10 ellps=WGS84")
+
+#Create a function to format the raster, finds
+
+ Mode <- function(x, na.rm = FALSE) {
+    if(na.rm){
+      x = subset(x, !is.na(x))
+    }
+
+    ux <- unique(x)
+    return(ux[which.max(tabulate(match(x, ux)))])
+  }
+ 
+#extracting raster values for land cover types to each spatial point where an observation was made
+data_19 <- data_19 %>%
+  mutate(LandCover = raster::extract(WHR13, as(., "Spatial"), na.rm = TRUE))
+
+#Need to round to closest whole number, since raster is continuous values
+data_19$LandCover <- round(data_19$LandCover)
+
+#Transform these numbers into categorical variables
+data_19$LandCover <- as.factor(data_19$LandCover)
+
+#Of the 13 land cover classes, 1 is urban (#). This code labels each observation as urban or non-urban
+data_19$LandCover <- recode(data_19$LandCover, 
+         `1` = "Non-Urban",
+         `2` = "Non-Urban",
+         `3` = "Non-Urban",
+         `4` = "Non-Urban",
+         `5` = "Non-Urban",
+         `6` = "Non-Urban",
+         `7` = "Urban",
+         `8` = "Non-Urban",
+         `9` = "Non-Urban",
+         `10` = "Non-Urban",
+         `11` = "Non-Urban",
+         `12` = "Non-Urban",
+         `13` = "Non-Urban")
+```
+2018
+```{r}
+data_18 <- st_as_sf(alameda_18, coords = c('LONGITUDE', 'LATITUDE'), crs = "+init=epsg:4326")
+
+data_18 <- st_transform(data_18, crs = "+proj=utm +zone=10 ellps=WGS84")
+
+#Environmental Data
+#This is a raster layer with 13 different land cover categories
+WHR13 <- raster("/Users/hayleeoyler/Desktop/WHR13.tif")
+WHR13 <- projectRaster(WHR13, crs = "+proj=utm +zone=10 ellps=WGS84")
+
+#Create a function to format the raster, finds
+
+ Mode <- function(x, na.rm = FALSE) {
+    if(na.rm){
+      x = subset(x, !is.na(x))
+    }
+
+    ux <- unique(x)
+    return(ux[which.max(tabulate(match(x, ux)))])
+  }
+ 
+#extracting raster values for land cover types to each spatial point where an observation was made
+data_18 <- data_18 %>%
+  mutate(LandCover = raster::extract(WHR13, as(., "Spatial"), na.rm = TRUE))
+
+#Need to round to closest whole number, since raster is continuous values
+data_18$LandCover <- round(data_18$LandCover)
+
+#Transform these numbers into categorical variables
+data_18$LandCover <- as.factor(data_18$LandCover)
+
+#Of the 13 land cover classes, 1 is urban (#). This code labels each observation as urban or non-urban
+data_18$LandCover <- recode(data_18$LandCover, 
+         `1` = "Non-Urban",
+         `2` = "Non-Urban",
+         `3` = "Non-Urban",
+         `4` = "Non-Urban",
+         `5` = "Non-Urban",
+         `6` = "Non-Urban",
+         `7` = "Urban",
+         `8` = "Non-Urban",
+         `9` = "Non-Urban",
+         `10` = "Non-Urban",
+         `11` = "Non-Urban",
+         `12` = "Non-Urban",
+         `13` = "Non-Urban")
+```
+2017
+```{r}
+data_17 <- st_as_sf(alameda_17, coords = c('LONGITUDE', 'LATITUDE'), crs = "+init=epsg:4326")
+
+data_17 <- st_transform(data_17, crs = "+proj=utm +zone=10 ellps=WGS84")
+
+#Environmental Data
+#This is a raster layer with 13 different land cover categories
+WHR13 <- raster("/Users/hayleeoyler/Desktop/WHR13.tif")
+WHR13 <- projectRaster(WHR13, crs = "+proj=utm +zone=10 ellps=WGS84")
+
+#Create a function to format the raster, finds
+
+ Mode <- function(x, na.rm = FALSE) {
+    if(na.rm){
+      x = subset(x, !is.na(x))
+    }
+
+    ux <- unique(x)
+    return(ux[which.max(tabulate(match(x, ux)))])
+  }
+ 
+#extracting raster values for land cover types to each spatial point where an observation was made
+data_17 <- data_17 %>%
+  mutate(LandCover = raster::extract(WHR13, as(., "Spatial"), na.rm = TRUE))
+
+#Need to round to closest whole number, since raster is continuous values
+data_17$LandCover <- round(data_17$LandCover)
+
+#Transform these numbers into categorical variables
+data_17$LandCover <- as.factor(data_17$LandCover)
+
+#Of the 13 land cover classes, 1 is urban (#). This code labels each observation as urban or non-urban
+data_17$LandCover <- recode(data_17$LandCover, 
+         `1` = "Non-Urban",
+         `2` = "Non-Urban",
+         `3` = "Non-Urban",
+         `4` = "Non-Urban",
+         `5` = "Non-Urban",
+         `6` = "Non-Urban",
+         `7` = "Urban",
+         `8` = "Non-Urban",
+         `9` = "Non-Urban",
+         `10` = "Non-Urban",
+         `11` = "Non-Urban",
+         `12` = "Non-Urban",
+         `13` = "Non-Urban")
+```
+Graph
+```{r}
+#All 4 years
+data20_19 <- rbind(data, data_19)
+data20_18 <- rbind(data20_19, data_18)
+data20_17 <- rbind(data20_18, data_17)
+
+ggplot(data20_17, aes(x=LandCover, fill=LandCover)) + geom_bar() + facet_wrap("Year") + labs(x="Land Cover Type", y="Observation Count", title = "Number of Observations by Land Cover type for 2017-2020") + theme_minimal()
+
+# 2020 by month
+ggplot(data, aes(x=LandCover, fill=LandCover)) + geom_bar() + facet_wrap("Month") + labs(x="Land Cover Type", y="Observation Count", title = "Number of Observations by Land Cover type for 2020") + theme_minimal()
+
+
+#Removing NAs
+data_sub <- data %>% dplyr::select("OBSERVATION.COUNT","OBSERVER.ID", "Month", "Year","LandCover")
+data_sub <- data_sub %>% replace_with_na(replace = list(OBSERVATION.COUNT = "X")) %>% drop_na()
+data_sub$geometry <- NULL
+lc_sum_20 <- data_sub %>% group_by(Month) %>% summarize(Total = sum(as.numeric(OBSERVATION.COUNT)))
+
+ggplot(lc_sum_20, aes(x=Month, y=OBSERVATION.COUNT, fill=LandCover)) + geom_bar(stat = "identity", position = "dodge") + labs(x="Land Cover Type", y="Observation Count", title = "Number of Observations by Land Cover type for 2020") + theme_minimal()
+#"Urban", "Non-urban", "Urban", "Non-urban", "Urban", "Non-urban", "Urban", "Non-urban"
+
+df_month <- data.frame(Month = c(01, 01, 02, 02, 03, 03, 04, 04, 05, 05, 06, 06, 07, 07, 08, 08, 09, 09, 10, 10, 11, 11, 12, 12),
+                       ObservationCount = c(15830, 89707, 113867, 26143, 113101, 290833, 
+                                            115547, 224297, 49086, 147260, 352671, 82289,
+                                            61671, 349468, 70064, 248409, 61070, 216522,
+                                            118893, 338389, 191418, 468646, 80352, 342554),
+                       LandCover = c("Urban", "Non-urban", "Urban", "Non-urban", "Urban", "Non-urban", "Urban", "Non-urban", "Urban", "Non-urban", "Urban", "Non-urban", "Urban", "Non-urban", "Urban", "Non-urban", "Urban", "Non-urban", "Urban", "Non-urban", "Urban", "Non-urban", "Urban", "Non-urban")) 
+
+ggplot(df_month, aes(x=Month, y=ObservationCount, fill=LandCover)) + geom_bar(stat = "identity", position = "dodge") + labs(x="Month", y="Observation Count", title = "Number of Observations by Land Cover type for 2020") + theme_minimal()+ scale_x_continuous(breaks = c(1:12))
+
+ggplot(df_month, aes(x=Month, y=ObservationCount, fill= LandCover)) + geom_line(aes(linetype=LandCover,  color=LandCover)) + labs(x="Month", y="Observation Count", title = "Number of observations by land cover type in 2020") + theme_minimal()+ scale_x_continuous(breaks = c(1:12))
+```
+Averages by month 2020
+```{r}
+#JANUARY
+data_na <- data %>% replace_with_na(replace = list(OBSERVATION.COUNT = "X")) %>% drop_na()
+data_u <- data_na %>% filter(LandCover == "Urban")
+data_u_1 <- data_u %>% filter(Month == "01")
+sum(as.numeric(data_u_1$OBSERVATION.COUNT))
+x <- 16343
+
+data_nu <- data_na %>% filter(LandCover == "Non-Urban")
+data_nu_1 <- data_nu %>% filter(Month == "01")
+sum(as.numeric(data_nu_1$OBSERVATION.COUNT))
+y <- 89195
+(x/(x+y))*100=15.48542 
+100-15.48542= 84.51458
+
+#FEBRUARY
+data_u_2 <- data_u %>% filter(Month == "02")
+sum(as.numeric(data_u_2$OBSERVATION.COUNT))
+x <- 11674
+
+data_nu_2 <- data_nu %>% filter(Month == "02")
+sum(as.numeric(data_nu_2$OBSERVATION.COUNT))
+y <- 26215
+
+(x/(x+y))*100= 30.81105
+100-30.81105= 69.18895
+
+#MARCH
+data_u_3 <- data_u %>% filter(Month == "03")
+sum(as.numeric(data_u_3$OBSERVATION.COUNT))
+x <- 113228
+
+data_nu_3 <- data_nu %>% filter(Month == "03")
+sum(as.numeric(data_nu_3$OBSERVATION.COUNT))
+y <- 290707
+
+(x/(x+y))*100= 28.03124
+100-28.03124= 71.96876
+
+#APRIL
+data_u_4 <- data_u %>% filter(Month == "04")
+sum(as.numeric(data_u_4$OBSERVATION.COUNT))
+x <- 115914
+
+data_nu_4 <- data_nu %>% filter(Month == "04")
+sum(as.numeric(data_nu_4$OBSERVATION.COUNT))
+y <- 223930
+(x/(x+y))*100= 34.108
+100-34.108= 65.892
+
+#MAY
+data_u_5 <- data_u %>% filter(Month == "05")
+sum(as.numeric(data_u_5$OBSERVATION.COUNT))
+x <- 48914
+
+data_nu_5 <- data_nu %>% filter(Month == "05")
+sum(as.numeric(data_nu_5$OBSERVATION.COUNT))
+y <- 147433
+
+(x/(x+y))*100= 24.91202
+100-24.91202= 75.08798
+
+#JUNE
+data_u_6 <- data_u %>% filter(Month == "06")
+sum(as.numeric(data_u_6$OBSERVATION.COUNT))
+x <- 35898
+
+data_nu_6 <- data_nu %>% filter(Month == "06")
+sum(as.numeric(data_nu_6$OBSERVATION.COUNT))
+y <- 81659
+
+(x/(x+y))*100= 30.53668
+100-30.53668= 69.46332
+
+#JULY
+data_u_7 <- data_u %>% filter(Month == "07")
+sum(as.numeric(data_u_7$OBSERVATION.COUNT))
+x <- 60030
+
+data_nu_7 <- data_nu %>% filter(Month == "07")
+sum(as.numeric(data_nu_7$OBSERVATION.COUNT))
+y <- 351109
+
+(x/(x+y))*100= 14.6009
+100-14.6009= 85.3991
+
+#AUGUST
+data_u_8 <- data_u %>% filter(Month == "08")
+sum(as.numeric(data_u_8$OBSERVATION.COUNT))
+x <- 71240
+
+data_nu_8 <- data_nu %>% filter(Month == "08")
+sum(as.numeric(data_nu_8$OBSERVATION.COUNT))
+y <- 247234
+
+(x/(x+y))*100= 22.36917
+100-22.36917= 77.63083
+
+#SEPTEMBER
+data_u_9 <- data_u %>% filter(Month == "09")
+sum(as.numeric(data_u_9$OBSERVATION.COUNT))
+x <- 60000
+
+data_nu_9 <- data_nu %>% filter(Month == "09")
+sum(as.numeric(data_nu_9$OBSERVATION.COUNT))
+y <- 217592
+
+(x/(x+y))*100= 21.61446
+100-21.61446= 78.38554
+
+#OCTOBER
+data_u_10 <- data_u %>% filter(Month == "10")
+sum(as.numeric(data_u_10$OBSERVATION.COUNT))
+x <- 119232
+
+data_nu_10 <- data_nu %>% filter(Month == "10")
+sum(as.numeric(data_nu_10$OBSERVATION.COUNT))
+y <- 338050
+
+(x/(x+y))*100= 26.07406
+100-26.07406= 73.92594
+
+#NOVEMBER
+data_u_11 <- data_u %>% filter(Month == "11")
+sum(as.numeric(data_u_11$OBSERVATION.COUNT))
+x <- 188969
+
+data_nu_11 <- data_nu %>% filter(Month == "11")
+sum(as.numeric(data_nu_11$OBSERVATION.COUNT))
+y <- 471096
+
+(x/(x+y))*100= 28.62885
+100-28.62885= 71.37115
+
+#DECEMBER
+data_u_12 <- data_u %>% filter(Month == "12")
+sum(as.numeric(data_u_12$OBSERVATION.COUNT))
+x <- 79545
+
+data_nu_12 <- data_nu %>% filter(Month == "12")
+sum(as.numeric(data_nu_12$OBSERVATION.COUNT))
+y <- 343361
+
+(x/(x+y))*100= 18.80914
+100-18.80914= 81.19086
+```
+Averages by year
+```{r}
+#2020
+data_na <- data %>% replace_with_na(replace = list(OBSERVATION.COUNT = "X")) %>% drop_na()
+data_u <- data_na %>% filter(LandCover == "Urban")
+mean(as.numeric(data_u$OBSERVATION.COUNT))
+sum(as.numeric(data_u$OBSERVATION.COUNT))
+#9.04969
+#920987
+data_nu <- data_na %>% filter(LandCover == "Non-Urban")
+mean(as.numeric(data_nu$OBSERVATION.COUNT))
+sum(as.numeric(data_nu$OBSERVATION.COUNT))
+#13.66219
+#2827581
+
+#2019
+data_19_na <- data_19 %>% replace_with_na(replace = list(OBSERVATION.COUNT = "X")) %>% drop_na()
+data_19_u <- data_19_na %>% filter(LandCover == "Urban")
+mean(as.numeric(data_19_u$OBSERVATION.COUNT))
+sum(as.numeric(data_19_u$OBSERVATION.COUNT))
+#8.805036
+#556716
+data_19_nu <- data_19_na %>% filter(LandCover == "Non-Urban")
+mean(as.numeric(data_19_nu$OBSERVATION.COUNT))
+sum(as.numeric(data_19_nu$OBSERVATION.COUNT))
+#13.41829
+#1515810
+
+#2018
+data_18_na <- data_18 %>% replace_with_na(replace = list(OBSERVATION.COUNT = "X")) %>% drop_na()
+data_18_u <- data_18_na %>% filter(LandCover == "Urban")
+mean(as.numeric(data_18_u$OBSERVATION.COUNT))
+sum(as.numeric(data_18_u$OBSERVATION.COUNT))
+#11.79166
+#858586
+data_18_nu <- data_18_na %>% filter(LandCover == "Non-Urban")
+mean(as.numeric(data_18_nu$OBSERVATION.COUNT))
+sum(as.numeric(data_18_nu$OBSERVATION.COUNT))
+#14.29846
+#1899293
+
+#2017
+data_17_na <- data_17 %>% replace_with_na(replace = list(OBSERVATION.COUNT = "X")) %>% drop_na()
+data_17_u <- data_17_na %>% filter(LandCover == "Urban")
+mean(as.numeric(data_17_u$OBSERVATION.COUNT))
+sum(as.numeric(data_17_u$OBSERVATION.COUNT))
+#10.4908
+#708370
+data_17_nu <- data_17_na %>% filter(LandCover == "Non-Urban")
+mean(as.numeric(data_17_nu$OBSERVATION.COUNT))
+sum(as.numeric(data_17_nu$OBSERVATION.COUNT))
+#17.05465
+#2619850 
+
+mean_df <- data.frame(Year = c(2020,2019,2018,2017), Urban = c(9.05,8.81,11.79,10.49), NonUrban = c(13.66,13.42,14.298,17.05))
+mean_df
+
+sum_df <- data.frame(Year = c(2020, 2020, 2019, 2019, 2018, 2018, 2017, 2017),
+                     ObservationCount = c(920987, 2827581, 556716, 1515810, 858586, 1899293, 708370, 2619850),
+                     LandCover = c("Urban", "Non-urban", "Urban", "Non-urban", "Urban", "Non-urban", "Urban", "Non-urban"))
+
+```
+Misc
+```{r}
+
+sum_df <- data.frame(Year = c(2020, 2020, 2019, 2019, 2018, 2018, 2017, 2017),
+                     ObservationCount = c(920987, 2827581, 556716, 1515810, 858586, 1899293, 708370, 2619850),
+                     LandCover = c("Urban", "Non-urban", "Urban", "Non-urban", "Urban", "Non-urban", "Urban", "Non-urban"))
+```
