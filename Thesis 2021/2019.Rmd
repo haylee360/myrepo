@@ -1,0 +1,512 @@
+---
+title: '2019'
+output: html_document
+---
+
+```{r setup, include=FALSE} 
+alameda_19 <- read.delim(file.choose())
+alameda_19 <- alameda_19 %>% dplyr::select("COMMON.NAME", "SCIENTIFIC.NAME","SUBSPECIES.COMMON.NAME", "SUBSPECIES.SCIENTIFIC.NAME", "OBSERVATION.COUNT", "LOCALITY", "LATITUDE", "LONGITUDE", "OBSERVATION.DATE", "OBSERVER.ID") %>% mutate(Day = format(as.Date(alameda_19$OBSERVATION.DATE, format = "%Y-%m-%d"), "%d"),
+         Month = format(as.Date(alameda_19$OBSERVATION.DATE, format = "%Y-%m-%d"), "%m"), 
+         Year = format(as.Date(alameda_19$OBSERVATION.DATE, format = "%Y-%m-%d"), "%Y"))
+length(unique(alameda_19$OBSERVER.ID))  
+#1424
+
+a_19_my <- alameda_19 %>%
+  mutate(Day = format(as.Date(alameda_19$OBSERVATION.DATE, format = "%Y-%m-%d"), "%d"),
+         Month = format(as.Date(alameda_19$OBSERVATION.DATE, format = "%Y-%m-%d"), "%m"), 
+         Year = format(as.Date(alameda_19$OBSERVATION.DATE, format = "%Y-%m-%d"), "%Y"))
+a_19_my$OBSERVER.ID <- as.numeric(as.integer(factor(a_19_my$OBSERVER.ID)))
+ggplot(a_19_my, aes(x=Month)) + geom_bar() + labs(x="Month", y="Observation Count", title = "Number of Observations by Month from 2019") + theme_minimal()
+
+```
+
+% obs by day
+```{r}
+#%obs/day that are new obs (ie, joined 2020 compared to 2019)
+a_3_1 <- a_20_my %>% filter(Month == "03", Day == "31")
+new_20_3 <- new_20 %>% filter(Month == "03", Day == "31")
+perc_day <- (length(unique(new_20_3$OBSERVER.ID))/length(unique(a_3_1$OBSERVER.ID)))*100
+
+#c(19.72, 9.76, 7.14, 15.15, 8.33, 18.60, 21.43(7), 13.20, 17.5, 11.11, 11.36, 2.22, 13.64, 31.15(14), 20.93, 10.42, 12.96, 16.27, 12.33,  13.85, 15.28(21), 11.76, 6.12, 13.89, 9.09, 3.64, 13.56, 12.24, 15.94, 9.43, 10.74) 
+
+percent <- data.frame(Percent = c(19.72, 9.76, 7.14, 15.15, 8.33, 18.60, 21.43, 13.20, 17.5, 11.11, 11.36, 2.22, 13.64, 31.15, 20.93, 10.42, 12.96, 16.27, 12.33,  13.85, 15.28, 11.76, 6.12, 13.89, 9.09, 3.64, 13.56, 12.24, 15.94, 9.43, 10.74), Day = 1:31)
+
+ggplot(percent, aes(x=Day, y= Percent)) +geom_line() +labs(title = "Percent of Observations by New Users by Day in March", x="Day", y="Percent %") + theme_minimal()
+```
+
+Observations by day by MARCH
+```{r}
+#a_no_na <- a_20_my %>% replace_with_na(replace = list(OBSERVATION.COUNT = "X")) %>% drop_na()
+unique(a_no_na$OBSERVATION.COUNT)
+#a_sum <- a_no_na %>% filter(Month == "01") %>% group_by(Day) %>% summarize(Total = sum(as.numeric(OBSERVATION.COUNT)))
+
+no_na_19 <- a_19_my %>% replace_with_na(replace = list(OBSERVATION.COUNT = "X")) %>% drop_na()
+unique(no_na_19$OBSERVATION.COUNT)
+no_na_18 <- a_18_my %>% replace_with_na(replace = list(OBSERVATION.COUNT = "X")) %>% drop_na()
+unique(no_na_18$OBSERVATION.COUNT)
+no_na_17 <- a_17_my %>% replace_with_na(replace = list(OBSERVATION.COUNT = "X")) %>% drop_na()
+unique(no_na_17$OBSERVATION.COUNT)
+
+#summing total observations by year
+sum(as.numeric(a_no_na$OBSERVATION.COUNT))
+3748568/365= 10270.05
+sum(as.numeric(no_na_19$OBSERVATION.COUNT))
+2072526/243= 8528.914
+sum(as.numeric(no_na_18$OBSERVATION.COUNT))
+2757879/304= 9071.97
+sum(as.numeric(no_na_17$OBSERVATION.COUNT))
+3328220/365= 9118.411
+c(3748568,2072426,2757879,3328220)
+c(10270.05, 5678.153, 7555.833, 9118.411)
+
+#summing total observers by year 
+length(unique(a_20_my$OBSERVER.ID))
+
+#Summing observations by day for March
+sum_3_20 <- a_no_na %>% filter(Month == "03") %>% group_by(Day) %>% summarize(Total20 = sum(as.numeric(OBSERVATION.COUNT)))
+sum_3_20 <- a_no_na %>% filter(Month == "03") %>% group_by(Day) %>% summarize(Total20 = sum(as.numeric(OBSERVATION.COUNT)))
+mean(a_sum_3$Total20)
+class(a_sum_3$Total20)
+
+sum_3_19 <- no_na_19 %>% filter(Month == "03") %>% group_by(Day) %>% summarize(Total19 = sum(as.numeric(OBSERVATION.COUNT)))
+mean(as.numeric(a_sum_3$Total20))
+
+#sum_3_18 <- no_na_18 %>% filter(Month == "03") %>% group_by(Day) %>% summarize(Total = sum(as.numeric(OBSERVATION.COUNT)))
+
+sum_3_17 <- no_na_17 %>% filter(Month == "03") %>% group_by(Day) %>% summarize(Total17 = sum(as.numeric(OBSERVATION.COUNT)))
+mean(a_sum_3$Total20)
+
+sum_20_19 <- merge(sum_3_20, sum_3_19)
+sum_20_17 <- merge(sum_20_19, sum_3_17)
+group = 1
+
+ggplot(sum_20_17, aes(x=Day, group=1)) + geom_line(aes(y=Total20), color="blue") + geom_line(aes(y=Total19), color="darkolivegreen") + geom_line(aes(y=Total17), color="firebrick")+ labs(x="Day", y="Number of Observations", title = "Number of Observations by day in March") +theme_minimal() 
+
+
+```
+Obs by day APRIL
+```{r}
+
+sum_4_20 <- a_no_na %>% filter(Month == "04") %>% group_by(Day) %>% summarize(Total20 = sum(as.numeric(OBSERVATION.COUNT)))
+#mean(a_sum_3$Total20)
+
+sum_4_19 <- no_na_19 %>% filter(Month == "04") %>% group_by(Day) %>% summarize(Total19 = sum(as.numeric(OBSERVATION.COUNT)))
+#mean(a_sum_3$Total19)
+
+sum_4_18 <- no_na_18 %>% filter(Month == "04") %>% group_by(Day) %>% summarize(Total18 = sum(as.numeric(OBSERVATION.COUNT)))
+
+sum_4_17 <- no_na_17 %>% filter(Month == "04") %>% group_by(Day) %>% summarize(Total17 = sum(as.numeric(OBSERVATION.COUNT)))
+#mean(a_sum_3$Total17)
+
+sum_20_19_4 <- merge(sum_4_20, sum_4_19)
+sum_20_18_4 <- merge(sum_20_19_4, sum_4_18)
+sum_20_17_4 <- merge(sum_20_18_4, sum_4_17)
+
+group = 1
+
+ggplot(sum_20_17_4, aes(x=Day, group=1)) + 
+  geom_line(aes(y=Total20), color="blue") + 
+  geom_line(aes(y=Total19), color="darkolivegreen") + 
+  geom_line(aes(y=Total17), color="firebrick")+ 
+  geom_line(aes(y=Total18), color="darkorchid") + labs(x="Day", y="Number of Observations", title = "Number of Observations by day in April") +theme_minimal() 
+```
+Obs by day in MAY
+```{r}
+sum_5_20 <- a_no_na %>% filter(Month == "05") %>% group_by(Day) %>% summarize(Total20 = sum(as.numeric(OBSERVATION.COUNT)))
+#mean(a_sum_3$Total20)
+
+sum_5_19 <- no_na_19 %>% filter(Month == "05") %>% group_by(Day) %>% summarize(Total19 = sum(as.numeric(OBSERVATION.COUNT)))
+#mean(a_sum_3$Total19)
+
+sum_5_18 <- no_na_18 %>% filter(Month == "05") %>% group_by(Day) %>% summarize(Total18 = sum(as.numeric(OBSERVATION.COUNT)))
+
+sum_5_17 <- no_na_17 %>% filter(Month == "05") %>% group_by(Day) %>% summarize(Total17 = sum(as.numeric(OBSERVATION.COUNT)))
+#mean(a_sum_3$Total17)
+
+sum_20_19_5 <- merge(sum_5_20, sum_5_19)
+sum_20_18_5 <- merge(sum_20_19_5, sum_5_18)
+sum_20_17_5 <- merge(sum_20_18_5, sum_5_17)
+
+group = 1
+
+ggplot(sum_20_17_5, aes(x=Day, group=1)) + 
+  geom_line(aes(y=Total20), color="blue") + 
+  geom_line(aes(y=Total19), color="darkolivegreen") + 
+  geom_line(aes(y=Total17), color="firebrick")+ 
+  geom_line(aes(y=Total18), color="darkorchid") + labs(x="Day", y="Number of Observations", title = "Number of Observations by day in May") +theme_minimal() 
+```
+New observers IDs by year
+```{r}
+#Average number of users per day
+new_20_3 <- new_20 %>% filter(Month == "03", Day == "01")
+length(unique(new_20_3$OBSERVER.ID))
+#14
+
+new_20_3 <- new_20 %>% filter(Month == "03", Day == "02")
+length(unique(new_20_3$OBSERVER.ID))
+#4
+
+new_20_3 <- new_20 %>% filter(Month == "03", Day == "03")
+length(unique(new_20_3$OBSERVER.ID))
+#3
+
+...
+
+mean(c("number of users per day"))
+##compare means for all 4 years for the month of March, use to run a t.test/ANOVA?## 
+
+
+a_no_na <- a_20_my %>% replace_with_na(replace = list(OBSERVATION.COUNT = "X")) %>% drop_na()
+class(a_20_my$OBSERVER.ID)
+
+#JANUARY
+a_sum_1_obs <- a_20_my %>% filter(Month == "01") %>% group_by(Day) %>% summarize(Totalobservers = count(unique(OBSERVER.ID)))
+sum(unique(OBSERVER.ID))
+#3404.452
+#I think sum is giving me the sum of the integer value of the observer IDs, not the count of the IDs. Maybe use count function instead? 
+
+obs_20_1$OBSERVER.ID <- as.numeric(as.integer(factor(obs_20_1$OBSERVER.ID)))
+class(obs_20_1$OBSERVER.ID)
+
+
+#FEBRUARY
+a_sum_2 <- a_no_na %>% filter(Month == "02") %>% group_by(Day) %>% summarize(Total = sum(as.numeric(OBSERVATION.COUNT)))
+mean(a_sum_2$Total)
+#1306.517
+
+#MARCH
+a_sum_3 <- a_no_na %>% filter(Month == "03") %>% group_by(Day) %>% summarize(Total = sum(as.numeric(OBSERVATION.COUNT)))
+mean(a_sum_3$Total)
+#13030.16
+
+#APRIL
+a_sum_4 <- a_no_na %>% filter(Month == "04") %>% group_by(Day) %>% summarize(Total = sum(as.numeric(OBSERVATION.COUNT)))
+mean(a_sum_4$Total)
+#11328.13
+
+#MAY
+a_sum_5 <- a_no_na %>% filter(Month == "05") %>% group_by(Day) %>% summarize(Total = sum(as.numeric(OBSERVATION.COUNT)))
+mean(a_sum_5$Total)
+#6333.774
+
+#JUNE
+a_sum_6 <- a_no_na %>% filter(Month == "06") %>% group_by(Day) %>% summarize(Total = sum(as.numeric(OBSERVATION.COUNT)))
+mean(a_sum_6$Total)
+#3918.567
+
+#JULY
+a_sum_7 <- a_no_na %>% filter(Month == "07") %>% group_by(Day) %>% summarize(Total = sum(as.numeric(OBSERVATION.COUNT)))
+mean(a_sum_7$Total)
+#13262.55
+
+#AUGUST
+a_sum_8 <- a_no_na %>% filter(Month == "08") %>% group_by(Day) %>% summarize(Total = sum(as.numeric(OBSERVATION.COUNT)))
+mean(a_sum_8$Total)
+#10273.35
+
+#SEPTEMBER
+a_sum_9 <- a_no_na %>% filter(Month == "09") %>% group_by(Day) %>% summarize(Total = sum(as.numeric(OBSERVATION.COUNT)))
+mean(a_sum_9$Total)
+#9253.067
+
+#OCTOBER
+a_sum_10 <- a_no_na %>% filter(Month == "10") %>% group_by(Day) %>% summarize(Total = sum(as.numeric(OBSERVATION.COUNT)))
+mean(a_sum_10$Total)
+#14751.03
+
+#NOVEMBER
+a_sum_11 <- a_no_na %>% filter(Month == "11") %>% group_by(Day) %>% summarize(Total = sum(as.numeric(OBSERVATION.COUNT)))
+mean(a_sum_11$Total)
+#22002.17
+
+#DECEMBER
+a_sum_12 <- a_no_na %>% filter(Month == "12") %>% group_by(Day) %>% summarize(Total = sum(as.numeric(OBSERVATION.COUNT)))
+mean(a_sum_12$Total)
+#13642.13
+
+
+ggplot(a_sum_3, aes(x=Day, y=Total, group = 1)) + geom_line()+ labs(x="Day", y="Number of Observations", title = "Number of Observations by day in January 2020 ") +theme_minimal() 
+
+
+
+length(unique(new_20_3$OBSERVER.ID))
+length(unique(a_3_1$OBSERVER.ID))
+``` 
+Summed observation count by month
+```{r}
+a_no_na <- a_20_my %>% replace_with_na(replace = list(OBSERVATION.COUNT = "X")) %>% drop_na()
+
+#JANUARY
+a_sum_1 <- a_no_na %>% filter(Month == "01") %>% group_by(Day) %>% summarize(Total = sum(as.numeric(OBSERVATION.COUNT)))
+mean(a_sum_1$Total)
+#3404.452
+
+#FEBRUARY
+a_sum_2 <- a_no_na %>% filter(Month == "02") %>% group_by(Day) %>% summarize(Total = sum(as.numeric(OBSERVATION.COUNT)))
+mean(a_sum_2$Total)
+#1306.517
+
+#MARCH
+a_sum_3 <- a_no_na %>% filter(Month == "03") %>% group_by(Day) %>% summarize(Total = sum(as.numeric(OBSERVATION.COUNT)))
+mean(a_sum_3$Total)
+#13030.16
+
+#APRIL
+a_sum_4 <- a_no_na %>% filter(Month == "04") %>% group_by(Day) %>% summarize(Total = sum(as.numeric(OBSERVATION.COUNT)))
+mean(a_sum_4$Total)
+#11328.13
+
+#MAY
+a_sum_5 <- a_no_na %>% filter(Month == "05") %>% group_by(Day) %>% summarize(Total = sum(as.numeric(OBSERVATION.COUNT)))
+mean(a_sum_5$Total)
+#6333.774
+
+#JUNE
+a_sum_6 <- a_no_na %>% filter(Month == "06") %>% group_by(Day) %>% summarize(Total = sum(as.numeric(OBSERVATION.COUNT)))
+mean(a_sum_6$Total)
+#3918.567
+
+#JULY
+a_sum_7 <- a_no_na %>% filter(Month == "07") %>% group_by(Day) %>% summarize(Total = sum(as.numeric(OBSERVATION.COUNT)))
+mean(a_sum_7$Total)
+#13262.55
+
+#AUGUST
+a_sum_8 <- a_no_na %>% filter(Month == "08") %>% group_by(Day) %>% summarize(Total = sum(as.numeric(OBSERVATION.COUNT)))
+mean(a_sum_8$Total)
+#10273.35
+
+#SEPTEMBER
+a_sum_9 <- a_no_na %>% filter(Month == "09") %>% group_by(Day) %>% summarize(Total = sum(as.numeric(OBSERVATION.COUNT)))
+mean(a_sum_9$Total)
+#9253.067
+
+#OCTOBER
+a_sum_10 <- a_no_na %>% filter(Month == "10") %>% group_by(Day) %>% summarize(Total = sum(as.numeric(OBSERVATION.COUNT)))
+mean(a_sum_10$Total)
+#14751.03
+
+#NOVEMBER
+a_sum_11 <- a_no_na %>% filter(Month == "11") %>% group_by(Day) %>% summarize(Total = sum(as.numeric(OBSERVATION.COUNT)))
+mean(a_sum_11$Total)
+#22002.17
+
+#DECEMBER
+a_sum_12 <- a_no_na %>% filter(Month == "12") %>% group_by(Day) %>% summarize(Total = sum(as.numeric(OBSERVATION.COUNT)))
+mean(a_sum_12$Total)
+#13642.13
+
+#COMPARING YEARS
+a_no_na <- a_20_my %>% replace_with_na(replace = list(OBSERVATION.COUNT = "X")) %>% drop_na()
+a_sum_3 <- a_no_na %>% filter(Month == "03") %>% group_by(Day) %>% summarize(Total = sum(as.numeric(OBSERVATION.COUNT)))
+mean(a_sum_3$Total)
+#13030.16
+
+no_na_19 <- a_20_my %>% replace_with_na(replace = list(OBSERVATION.COUNT = "X")) %>% drop_na()
+a_sum_19_3 <- a_no_na %>% filter(Month == "03") %>% group_by(Day) %>% summarize(Total = sum(as.numeric(OBSERVATION.COUNT)))
+mean(a_sum_3$Total)
+#13030.16
+
+ggplot(a_sum_3, aes(x=Day, y=Total, group = 1)) + geom_line()+ labs(x="Day", y="Number of Observations", title = "Number of Observations by day in January 2020 ") +theme_minimal() 
+
+```
+New Observers each month 
+```{r}
+#Create objects by months X and Y
+obs_19_1 <- filter(alameda_19, Month == "01")
+obs_19_2 <- filter(alameda_19, Month == "02")
+obs_19_3 <- filter(alameda_19, Month == "03")
+obs_19_4 <- filter(alameda_19, Month == "04")
+obs_19_5 <- filter(alameda_19, Month == "05")
+obs_19_6 <- filter(alameda_19, Month == "06")
+obs_19_7 <- filter(alameda_19, Month == "07")
+obs_19_8 <- filter(alameda_19, Month == "08")
+obs_19_9 <- filter(alameda_19, Month == "09")
+obs_19_10 <- filter(alameda_19, Month == "10")
+obs_19_11 <- filter(alameda_19, Month == "11")
+obs_19_12 <- filter(alameda_19, Month == "12")
+
+#UNIQUE JANUARY
+jan_19_uniq <- filter(obs_19_1, !(OBSERVER.ID %in% alameda_18))
+jan_19_uniq_2 <- obs_19_1 %>% filter(!OBSERVER.ID %in% alameda_18)
+length(unique(jan_19_uniq$OBSERVER.ID))
+length(unique(jan_19_uniq_2$OBSERVER.ID))
+length(unique(obs_19_1$OBSERVER.ID))
+length(unique(alameda_18$OBSERVER.ID))
+#437
+
+#UNIQUE FEBRUARY
+#make unique object for month X
+jan_obs_19 <- unique(obs_19_1$OBSERVER.ID)
+
+#Filter unique object month X from month Y. Take length of unique filtered month Y.
+feb_obs_19 <- filter(obs_19_2, !(OBSERVER.ID %in% jan_obs_19))
+feb_obs_19 <- filter(obs_19_2, !(OBSERVER.ID %in% alameda_18))
+feb_obs_19 <- filter(obs_19_2, !(OBSERVER.ID %in% alameda_17))
+length(unique(feb_obs_19$OBSERVER.ID))
+#384
+
+#UNIQUE MARCH
+month1.2_19 <- filter(alameda_19, Month %in% c("01","02"))
+month1.2_19<- filter(month1.2_19, !(OBSERVER.ID %in% alameda_18))
+two_month_19 <- unique(month1.2_19$OBSERVER.ID)
+march_obs_19 <- filter(obs_19_3, !(OBSERVER.ID %in% two_month_19))
+length(unique(march_obs_19$OBSERVER.ID))
+#6320
+#387
+#185
+
+#UNIQUE APRIL
+month1.3_19 <- filter(alameda_19, Month %in% c("01","02","03"))
+month1.3_19<- filter(month1.3_19, !(OBSERVER.ID %in% alameda_18))
+three_month_19 <- unique(month1.3_19$OBSERVER.ID)
+april_obs_19 <- filter(obs_19_4, !(OBSERVER.ID %in% three_month_19))
+length(unique(april_obs_19$OBSERVER.ID))
+#3546
+#362
+#136
+
+#UNIQUE MAY
+month1.4_19 <- filter(alameda_19, Month %in% c("01","02","03","04"))
+four_month_19 <- unique(month1.4_19$OBSERVER.ID)
+may_obs_19 <- filter(obs_19_5, !(OBSERVER.ID %in% four_month_19))
+length(unique(may_obs_19$OBSERVER.ID))
+#3251
+#418
+#130 
+
+#UNIQUE JUNE
+month1.5_19 <- filter(alameda_19, Month %in% c("01","02","03","04","05"))
+five_month_19 <- unique(month1.5_19$OBSERVER.ID)
+june_obs_19 <- filter(obs_19_6, !(OBSERVER.ID %in% five_month_19))
+length(unique(june_obs_19$OBSERVER.ID))
+#0
+#339 
+#0
+
+#UNIQUE JULY
+month1.6_19 <- filter(alameda_19, Month %in% c("01","02","03","04","05","06"))
+six_month_19 <- unique(month1.6_19$OBSERVER.ID)
+july_obs_19 <- filter(obs_19_7, !(OBSERVER.ID %in% six_month_19))
+length(unique(july_obs_19$OBSERVER.ID))
+#0
+#335
+#0
+
+#UNIQUE AUGUST
+month1.7_19 <- filter(alameda_19, Month %in% c("01","02","03","04","05","06","07"))
+seven_month_19 <- unique(month1.7_19$OBSERVER.ID)
+august_obs_19 <- filter(obs_19_8, !(OBSERVER.ID %in% seven_month_19))
+length(unique(august_obs_19$OBSERVER.ID))
+#0
+#309
+#0
+
+#UNIQUE SEPTEMBER
+month1.8_19 <- filter(alameda_19, Month %in% c("01","02","03","04","05","06","07","08"))
+eight_month_19 <- unique(month1.8_19$OBSERVER.ID)
+sept_obs_19 <- filter(obs_19_9, !(OBSERVER.ID %in% eight_month_19))
+length(unique(sept_obs_19$OBSERVER.ID))
+#1857
+#301
+#135
+
+#UNIQUE OCTOBER
+month1.9_19 <- filter(alameda_19, Month %in% c("01","02","03","04","05","06","07","08","09"))
+nine_month_19 <- unique(month1.9_19$OBSERVER.ID)
+oct_obs_19 <- filter(obs_19_10, !(OBSERVER.ID %in% nine_month_19))
+length(unique(oct_obs_19$OBSERVER.ID))
+#188
+#411
+#89
+
+#UNIQUE NOVEMBER
+month1.10_19 <- filter(alameda_19, Month %in% c("01","02","03","04","05","06","07","08","09","10"))
+ten_month_19 <- unique(month1.10_19$OBSERVER.ID)
+nov_obs_19 <- filter(obs_19_11, !(OBSERVER.ID %in% ten_month_19))
+length(unique(nov_obs_19$OBSERVER.ID))
+#1300
+#416
+#134
+
+#UNIQUE DECEMBER
+month1.11_19 <- filter(alameda_19, Month %in% c("01","02","03","04","05","06","07","08","09","10","11"))
+eleven_month_19 <- unique(month1.11_19$OBSERVER.ID)
+dec_obs_19 <- filter(obs_19_12, !(OBSERVER.ID %in% eleven_month_19))
+length(unique(dec_obs_19$OBSERVER.ID))
+#0
+#478
+#0
+
+total_new_19 <- data.frame(Month = c(1:12), 
+                        New_observers = c(437,7627,6320,3546,3521,0,0,0,1857,188,1300,0))
+total_new_19_2 <- data.frame(Month = c(1:12), 
+                        New_observers = c(437,384,387,362,418,339,335,309,301,411,416,478))
+total_new_19_3 <- data.frame(Month = c(1:12), 
+                        New_observers = c(437,385,185,136,130,0,0,0,135,89,134,0))
+
+ggplot(total_new_19_3, aes(x=Month, y=New_observers)) + geom_line()+ labs(x="Month", y="Number of new Users", title = "Number of new users by month in 2019") +theme_minimal() + scale_x_continuous(breaks = c(1:12))
+
+total_new_1920 <- data.frame(Month = c(1:12), 
+                        Nineteen = c(6373,7627,6320,3546,3521,0,0,0,1857,188,1300,0),
+                        Twenty = c(0,708,4840,3236,2722,1191,1850,1363,1024,2070,3528,1743),
+                        Eighteen = c(0,3339,0,1589,3258,843,0,1673,2455,4043,2753,4475),
+                       Seventeen = c(0,5112,5802,4138,1291,1568,2572,2808,1827,2573,1925,2759))
+
+ggplot(total_new_1920, aes(x=Month)) + 
+  geom_line(aes(y= Nineteen), color="darkolivegreen", show.legend = TRUE )+ 
+  geom_line(aes(y=Twenty), color="blue", show.legend = TRUE ) + 
+  geom_line(aes(y=Eighteen), color ="darkorchid", show.legend = TRUE ) + 
+  geom_line(aes(y=Seventeen), color = "firebrick", show.legend = TRUE ) + 
+  labs(x="Month", y="Number of new Users", title = "Number of new users by month") + theme_minimal() + scale_x_continuous(breaks = c(1:12))
+
+total_new_1920_2 <- data.frame(Month = c(1:12), 
+                        Nineteen = c(437,385,185,136,130,0,0,0,135,89,134,0),
+                        Twenty = c(437,232,146,119,134,90,86,72,52,92,90,102),
+                        Eighteen = c(360,186,0,129,127,73,0,101,105,103,87,123),
+                       Seventeen = c(NA,160,134,105,99,62,91,114,78,78,66,83))
+
+ggplot(total_new_1920_2, aes(x=Month)) + 
+  geom_line(aes(y= Nineteen), color="darkolivegreen", show.legend = TRUE )+ 
+  geom_line(aes(y=Twenty), color="blue", show.legend = TRUE ) + 
+  geom_line(aes(y=Eighteen), color ="darkorchid", show.legend = TRUE ) + 
+  geom_line(aes(y=Seventeen), color = "firebrick", show.legend = TRUE ) + 
+  labs(x="Month", y="Number of new Users", title = "Number of new users by month") + theme_minimal() + scale_x_continuous(breaks = c(1:12))
+
+#third "try"
+total_new_1920_3 <- data.frame(Month = c(1:12), 
+                        Nineteen = c(232,385,185,136,130,0,0,0,135,89,134,0),
+                        Twenty = c(189,232,146,119,134,90,86,72,52,92,90,102),
+                        Eighteen = c(145,186,0,129,127,73,0,101,105,103,87,123),
+                       Seventeen = c(0,160,134,105,99,62,91,114,78,78,66,83))
+
+ggplot(total_new_1920_3, aes(x=Month)) + 
+  geom_line(aes(y= Nineteen), color="darkolivegreen", show.legend = TRUE )+ 
+  geom_line(aes(y=Twenty), color="blue", show.legend = TRUE ) + 
+  geom_line(aes(y=Eighteen), color ="darkorchid", show.legend = TRUE ) + 
+  geom_line(aes(y=Seventeen), color = "firebrick", show.legend = TRUE ) +
+  labs(x="Month", y="Number of new Users", title = "Number of new users by month") + theme_minimal() + scale_x_continuous(breaks = c(1:12))
+```
+
+
+Graph of individual species by month
+```{r}
+#graph by individual species 
+b_eagle_19 <- filter(a_19_my, COMMON.NAME == "Bald Eagle")
+ggplot(b_eagle_19, aes(x=Month)) +geom_bar() + labs(x="Month", y="Observation Count", title = "Observation of bald eagles by month in 2019") + theme_minimal() 
+  
+#scale_x_discrete("Month")
+#scale_x_date(date_breaks = "1 month", date_labels = "%m")
+
+```
+
+```{r}
+unique(a_19_my$COMMON.NAME)
+length(unique(a_19_my$COMMON.NAME))
+#349
+
+#Looking just at march, when lockdowns started
+march_19 <- filter(a_19_my, Month == "03")
+```
+
+
