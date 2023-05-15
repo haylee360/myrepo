@@ -133,7 +133,7 @@ lake_data %>%
 
 Say we want to make a scatter plot of the life expectancy for white males in California over time.
 ```{r ggplot-canvas, fig.width=4, fig.height=3, echo=FALSE}
-le_data <- read_csv("Data/Life-expectancy-by-state-long.csv")
+le_data <- read_csv("/Users/Haylee/myrepo/L05/Life-expectancy-by-state-long.csv")
 wm_cali <- le_data %>% filter(state == "California", sex == "Male", 
                               race == "white")
 
@@ -241,10 +241,10 @@ $$y = a + bx$$
     - `x` is the explanatory variable
 - The second argument sent to `lm()` is the data set.
 ```{r lm template}
-lm(formula = y ~ x, data = your_dataset)
+#lm(formula = y ~ x, data = your_dataset)
 
 #Recall the manatee example from Ch.3 that examined the relationship between the number of registered `powerboats` and the number of manatee `deaths` in Florida between 1977 and 2016
-mana_data <- read_csv("Data/Ch03_Manatee-deaths.csv")
+mana_data <- read_csv("/Users/Haylee/myrepo/L05/Ch03_Manatee-deaths.csv")
 
 #Recall that the relationship was linear by examining the scatter plot:
 mana_death1<-ggplot(mana_data, aes(x = powerboats, y = deaths)) +
@@ -368,3 +368,50 @@ $$seed.weight = exp(15.49130 - 1.522220\times{log_e(2000)})$$ (this uses the pro
 $$seed.weight = 50.45$$
 
 4. Interpret: Seeds are expected to weigh 50.45 for trees having a seed count of 2000.
+
+## Causality
+1) the relationship between something that happens or exists and the thing that causes it
+
+2) the idea that something can cause another thing to happen or exist
+
+
+## Counterfactuals
+## The "Ideal Experiment"
+This is a hypothetical study which, if we could actually conduct it, would allow us to infer causality
+
++ We expose all individuals to a treatment
++ We observe the outcomes for these exposed individuals
++ Roll back the clock
++ We prevent all individuals from getting the treatment
++ We observe the outcomes for these unexposed individuals
+
+In this "experiment" everything in the universe remains the same except our exposure of interest, which we observe before the outcomes
+
+## How do we approximate the "ideal"?
+Obviously in the real world we cannot control time, and often we cannot control exposures.
+What we do instead is use the data we do have to approximate the ideal.
+
+We can think about this as a missing data problem:
+If we observe a group of people who received treatment, what we want is to fill in the missing data on what would have happened if that same group of people had not received treatment.  
+This unobserved data is called the **counterfactual**. Counter to the fact, the "not" fact
+
+## Where to get the missing data?
+In most studies we have:
+  
+  observed probability that the outcome (Y) = disease (1) among people who did get the treatment(T=1)
+
+  P(Y=1|T=1)
+  
+  and observed probability of the outcome among people who did not get the treatment
+  
+  P(Y=1|T=0)
+
+If the people who did get the treatment are the same in all other ways as those who did not get the treatment 
+then we can use their experience to approximate what would have happend in the 'ideal' experiment.
+This is the underlying rationale for the randomized trial, if we are assigning treatment with equal probability to all people then the mix of other characteristics should be equivalent in the study groups.
+
+## Definition of Counfounding 
+
+A relationship between your variable of interest (exposure, treatment) and your outcome of interest (disease status, health condition etc) is confounded when there is a variable that is associated with both the exposure and outcome, and is not on the causal pathway between the two.  
+
+Variables that are on the causal pathway are those that represent a way in which the exposure acts on the outcome.  For example, poor cognitive function would be on the causal pathway between lack of sleep and trying to pay for groceries with your library card.  
